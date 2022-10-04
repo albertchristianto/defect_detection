@@ -1,8 +1,8 @@
 dataset/magnetic_tile/Defect/
 dataset/magnetic_tile/Normal/
 dataset/magnetic_tile/classes_name.txt
-ImageClassifier/checkpoint/
-ImageClassifier/weights/
+ImgClassifier/checkpoint/
+ImgClassifier/weights/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -36,16 +36,18 @@ def run():
     parser.add_argument('--dataset_root', default='E:\Albert Christianto\Project\defect_detection\dataset\magnetic_tile', type=str, metavar='DIR', help='path to train list')
     parser.add_argument('--epochs', default=100, type=int, metavar='N',
                                             help='number of total epochs to run')
-    parser.add_argument('--lr', '--learning-rate', default=0.001, type=float,
+    parser.add_argument('--lr', '--learning-rate', default=0.00001, type=float,
                                             metavar='LR', help='initial learning rate')
     parser.add_argument('-b', '--batch_size', default=8, type=int, metavar='N', help='batch size (default: 32)')
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, metavar='DIR',
                                             help='path to save tensorboard log and weight of the model')   
     parser.add_argument('--resume', action='store_true', default = False)
-    parser.add_argument('--model_type', type=str, default='ResNet50', help='define the model type that will be used: VGG16')
+    parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used')
+    parser.add_argument('--means_stds', type=str, default='mt_means_stds', help='define means and stds that will be used')
     parser.add_argument('--input_size', default=224, type=int, metavar='N', help='number of epochs to save the model')
     parser.add_argument('--save_freq', default=5, type=int, metavar='N', help='number of epochs to save the model')
     parser.add_argument('--pretrainedPath', default='weights/', type=str, metavar='DIR', help='path to pretrained model weight')
+    parser.add_argument('--use_pretrained', action='store_true', default = False)
     args = parser.parse_args()
 
     #this is the setting for data augmentation
@@ -54,6 +56,7 @@ def run():
     transform['random_rotation'] = [-20, 20]
     transform['input_width'] = args.input_size
     transform['input_height'] = args.input_size
+    transform['means_stds'] = args.means_stds
 
     #LOADING THE DATASET
     trainLoader, valLoader, class_name = getLoader(args.dataset_root, transform, args.batch_size)
@@ -65,6 +68,8 @@ def run():
     print('validation dataset len: {}'.format(valDatasetSize))
     #BUILDING THE NETWORK
     print('Building {} network'.format(args.model_type))
+    if not args.use_pretrained:
+        args.pretrainedPath = None
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, args.pretrainedPath)
     print('Finish building the network')
     #build loss criterion

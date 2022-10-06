@@ -15,17 +15,22 @@ class ImageClassificationDataset(Dataset):
         self.transformation = transform
         self.networks_w = self.transformation['input_width']
         self.networks_h = self.transformation['input_height']
+        self.define_means_stds()
         self.torch_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(self.transformation['random_horizontal_flips']),
             transforms.RandomRotation(self.transformation['random_rotation']),
             transforms.Resize((self.networks_h, self.networks_w)),
             transforms.ToTensor(),
-            transforms.Normalize(mean = vgg_means, std = vgg_stds)
+            transforms.Normalize(mean = self.means, std = self.stds)
         ])
 
-    def myAugmentation(self, img):
-        
-        return img
+    def define_means_stds(self):
+        if self.transformation['means_stds'] == "vgg_means_stds":
+            self.means = vgg_means
+            self.stds = vgg_stds
+        elif self.transformation['means_stds'] == "mt_means_stds":
+            self.means = magnetic_means
+            self.stds = magnetic_stds
 
     def __getitem__(self, index):
         imgPath = self.data[index][0]
@@ -39,7 +44,7 @@ class ImageClassificationDataset(Dataset):
             else:
                 img = cv2.imread(imgPath)
                 img = cv2.resize(img, (self.networks_w, self.networks_h), interpolation=cv2.INTER_CUBIC)
-                img = vgg_preprocess(img)
+                img = vgg_preprocess(img, self.means, self.stds)
                 img = torch.from_numpy(img)
         except Exception as e:
             print('image path in error: {}, {}'.format(imgPath, e))

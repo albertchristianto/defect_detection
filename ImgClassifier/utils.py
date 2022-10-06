@@ -1,15 +1,18 @@
 import os
 import numpy as np
 
-vgg_means = [0.5, 0.5, 0.5] #[0.485, 0.456, 0.406]
-vgg_stds = [1.0, 1.0, 1.0] #[0.229, 0.224, 0.225]
+vgg_means = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+vgg_stds = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
-def vgg_preprocess(image):
+magnetic_means = np.array([0.44145816564559937, 0.44145816564559937, 0.44145816564559937], dtype=np.float32)
+magnetic_stds = np.array([0.17827072739601135, 0.17827072739601135, 0.17827072739601135], dtype=np.float32)
+
+def vgg_preprocess(image, means=vgg_means, stds=vgg_stds):
     image = image.astype(np.float32) / 255.0
     preprocessed_img = image.copy()[:, :, ::-1]# swap bgr to rgb
     for i in range(3):
-        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - vgg_means[i]
-        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] / vgg_stds[i]
+        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - means[i]
+        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] / stds[i]
     preprocessed_img = preprocessed_img.transpose((2, 0, 1)).astype(np.float32)
     return preprocessed_img
 

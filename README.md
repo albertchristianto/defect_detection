@@ -1,3 +1,4 @@
+# Defect Detection
 This repository contains a project for defect detection. I started this side project to fill my free time. The goal in my mind about this project is how to scale up the project to tackle any field of defect detection using the latest technology in deep learning. I will also provide a simple inference backend system using python. Finally, I will build this project with Continous Integration and Continous Development in mind.
 
 ## Motivation

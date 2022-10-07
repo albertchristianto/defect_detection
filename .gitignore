@@ -5,6 +5,7 @@ dataset/magnetic_tile/mean_stds.txt
 dataset/private_pcb/
 ImgClassifier/checkpoint/
 ImgClassifier/weights/
+ImgClassifier/train.bat
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

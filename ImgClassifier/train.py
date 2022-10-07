@@ -14,14 +14,16 @@ from dataloader import getLoader
 from utils import *
 from test import validate
 
-def Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, valDatasetSize, train_checkpoints_path, writer):
-    #validate
-    #set cnn_model on the val mode
+SHOW_LOG_EVERY_N_ITERATIONS = 10000
+
+def Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer):
     val_acc = validate(args, cnn_model, valLoader, valDatasetSize)
     writer.add_scalar('Accuracy/val_set', val_acc, epoch)
     if (val_acc > best_acc_val):
         best_acc_val = val_acc
         best_epoch = epoch
+        model_save_filename = os.path.join(checkpoints_dir,'img_classifier_best_epoch_{}.pth'.format(epoch))
+        torch.save(cnn_model.state_dict(), model_save_filename)
     print('Saving checkpoint...')
     torch.save({'epoch':epoch,
                 'n_iter':n_iter,
@@ -60,10 +62,8 @@ def run():
 
     #LOADING THE DATASET
     trainLoader, valLoader, class_name = getLoader(args.dataset_root, transform, args.batch_size)
-    ##training
     trainDatasetSize = len(trainLoader.dataset)
     print('train dataset len: {}'.format(trainDatasetSize))
-    ##validation
     valDatasetSize = len(valLoader.dataset)
     print('validation dataset len: {}'.format(valDatasetSize))
     #BUILDING THE NETWORK
@@ -72,12 +72,9 @@ def run():
         args.pretrainedPath = None
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, args.pretrainedPath)
     print('Finish building the network')
-    #build loss criterion
-    criterion = nn.CrossEntropyLoss()
-    #build training optimizer
-    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)
-    #build learning scheduler
-    lr_train_scheduler = lr_scheduler.StepLR(optimizer_cnn_model, step_size=30, gamma=0.1)
+    criterion = nn.CrossEntropyLoss()#build loss criterion
+    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)#build training optimizer
+    lr_train_scheduler = lr_scheduler.StepLR(optimizer_cnn_model, step_size=30, gamma=0.1)#build learning scheduler
 
     best_epoch = 0
     best_acc_val = 0.0
@@ -106,18 +103,13 @@ def run():
     train_checkpoints_path = os.path.join(checkpoints_dir,'training_checkpoint.pth.tar')
     classes_name_path = os.path.join(checkpoints_dir, 'classes_name.txt')
     write_class_name(classes_name_path, class_name)
-    #create tensorboard logging file 
-    writer = SummaryWriter(log_dir=checkpoints_dir)
-    #enable all cnn model training parameter
-    for param in cnn_model.parameters():
+    writer = SummaryWriter(log_dir=checkpoints_dir)#create tensorboard logging file 
+    for param in cnn_model.parameters():#enable all cnn model training parameter
         param.requires_grad = True
-    #load the model and the criterion in the GPU
-    if args.use_gpu:
+    if args.use_gpu:#load the model and the criterion in the GPU
         cnn_model.cuda()
-    #set cnn_model on the train mode
-    cnn_model.train()
+    cnn_model.train()#set cnn_model on the train mode
 
-    #training process
     for epoch in range(start_epoch, args.epochs):
         # train the network
         running_loss = 0.0
@@ -147,7 +139,7 @@ def run():
             running_corrects += torch.sum(preds == label.data)
             writer.add_scalar('Loss_Logging/loss_iteration',loss.item(),n_iter)
             n_iter += 1
-            if ((i % 50) == 0):
+            if ((i % SHOW_LOG_EVERY_N_ITERATIONS) == 0):
                 print('[Epoch {}/{}] Iteration: {}. Loss: {}'.format(epoch, args.epochs, i, loss.item()))
         epoch_loss = running_loss / trainDatasetSize
         epoch_acc = running_corrects.double() / trainDatasetSize
@@ -156,17 +148,21 @@ def run():
         writer.add_scalar('Accuracy/train_set', epoch_acc, epoch)    
 
         #save checkpoint, then validate the network
-        if ((epoch % 5) == 0):
-            best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, valDatasetSize, train_checkpoints_path, writer)
-
-        #save the weight of the model
         if ((epoch % args.save_freq) == 0):
-            model_save_filename = os.path.join(checkpoints_dir,'epoch_{}.pth'.format(epoch))
-            torch.save(cnn_model.state_dict(), model_save_filename)
+            best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
+                valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)
 
-    ##Last validation------------------------------------------------------------------------- 
-    best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, valDatasetSize, train_checkpoints_path, writer)
-    print('The best Accuracy is {} at epoch {}'.format(best_acc_val, best_epoch))
+    best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
+        valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)
+
+    the_text = 'model_type: {}, input_size: {}, means_stds:{}, lr: {}, batch_size: {}, \n'.format(
+        args.model_type, args.input_size, args.means_stds, args.lr, args.batch_size) 
+    the_text += 'The best Accuracy is {} at epoch {}'.format(best_acc_val, best_epoch)
+    the_text_path = os.path.join(checkpoints_dir,'train_results.txt')
+    the_file = open(the_text_path, 'w')
+    the_file.write(the_text)
+    the_file.close()
+    print(the_text)
 
 if __name__ == '__main__':
     run()

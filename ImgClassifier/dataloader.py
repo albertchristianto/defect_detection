@@ -62,6 +62,6 @@ def getLoader(dataset_root, transform, bsize = 16):
     trainDataloader = DataLoader(trainDataset, batch_size=bsize, sampler=sampler, num_workers=1)
 
     valDataset = ImageClassificationDataset(data=valData, transform = transform, train_mode=False)
-    valDataloader = DataLoader(valDataset, batch_size = 1, num_workers = 1, shuffle = True)
+    valDataloader = DataLoader(valDataset, batch_size = bsize, num_workers = 1, shuffle = True)
 
     return trainDataloader, valDataloader, class_name

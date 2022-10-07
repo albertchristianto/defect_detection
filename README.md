@@ -1,17 +1,16 @@
-# Defect Detection
-This repository contains a project for defect detection. I started this side project to fill my free time. The goal in my mind about this project is how to scale up the project to tackle any field of defect detection using the latest technology in deep learning. 
+This repository contains a project for defect detection. I started this side project to fill my free time. The goal in my mind about this project is how to scale up the project to tackle any field of defect detection using the latest technology in deep learning. I will also provide a simple inference backend system using python. Finally, I will build this project with Continous Integration and Continous Development in mind.
 
 ## Motivation
 Defect detection is a broad topic in the industrial world. The semiconductor manufacturing industry needs defect detection systems to support the engineer in delivering various kinds of semiconductor products with good quality. A defect detection system improves the existing quality assurance process and simultaneously cuts costs by reducing the workload of the quality assurance workers. Other industry examples which need this system are the magnetic tile industry, civil-construction industry, electronic device industry, etc. 
 
-## Proposed Methods and Its Results
+## Proposed Methods and Experiments Results
 ### Public Dataset Used in this project
 I use the public defect detection dataset to build and test the performance of the proposed methods. These are the link for the dataset:
 1. [Magnetic Tile Surface Dataset](https://github.com/abin24/Magnetic-tile-defect-datasets.)
 2. Incoming
 ### Image Classification
 The most obvious method for defect detection is image classification. In the deep learning method, there is a lot of neural network architecture, such as VGG, ResNet, EfficientNet, etc. These neural network architectures usually are used for other deep learning methods as their backbone architecture. By using image classification, we can analyze the performance of the backbone architecture and check the deployability of the architecture.
-
+ 
 Below is the performance comparison table.
 
 | Backbone Name | Learning Rate | Accuracy(%) |
@@ -24,8 +23,7 @@ Below is the performance comparison table.
 
 Incoming analysis from me
 
-## Continuous Integration - Continuous Development
-
+## Continous Integration and Continous Development
 Incoming description from me
 
 ## Reference

@@ -21,7 +21,8 @@ def validate(args, cnn_model, valLoader, valDatasetSize):
         label = torch.autograd.Variable(label)
         outputs = cnn_model(img)
         _, preds = torch.max(outputs, 1)
-        correct += torch.sum(preds == label.data)
+        correct_array = preds == label.data
+        correct += torch.sum(correct_array)
     val_acc = correct.double() / valDatasetSize
     print('Accuracy: {:.4f}'.format(val_acc))
     cnn_model.train()
@@ -30,31 +31,31 @@ def validate(args, cnn_model, valLoader, valDatasetSize):
 def run():
     parser = argparse.ArgumentParser(description='PyTorch Tiny ImageNet Classification Testing Code by Albert Christianto')
     parser.add_argument('--use_gpu', action='store_true', default = False) 
-    parser.add_argument('--dataset_root', default='D:/Data/DataSet/mask', type=str, metavar='DIR', help='path to train list')
-    parser.add_argument('-b', '--batch_size', default=2, type=int,
-                                            metavar='N', help='batch size (default: 16)')
-    parser.add_argument('--weight_path', default='checkpoint/myVGG16_best.pth', type=str, metavar='DIR',
-                                            help='path to weight of the model')   
-    parser.add_argument('--model_type', type=str, default='VGG16', help='define the model type that will be used: VGG16,')
-    parser.add_argument('--input_size', default=224, type=int, metavar='N',
-                                            help='number of epochs to save the model')
+    parser.add_argument('--dataset_root', default='E:\Albert Christianto\Project\defect_detection\dataset\magnetic_tile', type=str, metavar='DIR', help='path to train list')
+    parser.add_argument('-b', '--batch_size', default=8, type=int, metavar='N', help='batch size (default: 16)')
+    parser.add_argument('--weight_path', default='checkpoint/20221007-0159/img_classifier_best_epoch_49.pth', type=str, metavar='DIR', help='path to weight of the model')   
+    parser.add_argument('--model_type', type=str, default='EfficientNetB0', help='define the model type that will be used')
+    parser.add_argument('--input_size', default=224, type=int, metavar='N', help='number of epochs to save the model')
+    parser.add_argument('--means_stds', type=str, default='mt_means_stds', help='define means and stds that will be used')
     args = parser.parse_args()
 
     #this is the setting for data augmentation
     transform = {}
+    transform['random_rotation'] = [-20, 20]
     transform['random_horizontal_flips'] = 0.5
     transform['input_width'] = args.input_size
     transform['input_height'] = args.input_size
+    transform['means_stds'] = args.means_stds
 
     #LOADING THE DATASET
     ##validation
-    _, valLoader, len_class_name = getLoader(args.dataset_root, transform, args.batch_size)
+    _, valLoader, class_name = getLoader(args.dataset_root, transform, args.batch_size)
     valDatasetSize = len(valLoader.dataset)
     print('validation dataset len: {}'.format(valDatasetSize))
 
     #BUILDING THE NETWORK
     print('Building {} network'.format(args.model_type))
-    cnn_model = get_model(args.model_type, len_class_name, args.input_size, None)
+    cnn_model = get_model(args.model_type, len(class_name), args.input_size, None)
     print('Finish building the network')
     print(cnn_model)
 

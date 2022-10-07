@@ -74,7 +74,8 @@ def run():
     print('Finish building the network')
     criterion = nn.CrossEntropyLoss()#build loss criterion
     optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)#build training optimizer
-    lr_train_scheduler = lr_scheduler.StepLR(optimizer_cnn_model, step_size=30, gamma=0.1)#build learning scheduler
+    step_size = int(args.epochs / 3)
+    lr_train_scheduler = lr_scheduler.StepLR(optimizer_cnn_model, step_size=step_size, gamma=0.1)#build learning scheduler
 
     best_epoch = 0
     best_acc_val = 0.0

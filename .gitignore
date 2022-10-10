@@ -4,6 +4,11 @@ dataset/magnetic_tile/Normal/
 dataset/magnetic_tile/classes_name.txt
 dataset/magnetic_tile/mean_stds.txt
 dataset/private_pcb/
+dataset/road_crack/Defect/
+dataset/road_crack/Normal/
+dataset/road_crack/classes_name.txt
+dataset/road_crack/mean_stds.txt
+dataset/tools/unknown_road_crack_dataset_augmentator.py
 ImgClassifier/checkpoint/
 ImgClassifier/weights/
 ImgClassifier/train.bat

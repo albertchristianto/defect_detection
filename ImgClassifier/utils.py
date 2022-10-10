@@ -7,6 +7,9 @@ vgg_stds = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 magnetic_means = np.array([0.44145816564559937, 0.44145816564559937, 0.44145816564559937], dtype=np.float32)
 magnetic_stds = np.array([0.17827072739601135, 0.17827072739601135, 0.17827072739601135], dtype=np.float32)
 
+road_crack_means = np.array([0.5038886070251465, 0.5033256411552429, 0.5023605823516846], dtype=np.float32)
+road_crack_stds = np.array([0.10422688722610474, 0.10182449221611023, 0.10056193172931671], dtype=np.float32)
+
 def vgg_preprocess(image, means=vgg_means, stds=vgg_stds):
     image = image.astype(np.float32) / 255.0
     preprocessed_img = image.copy()[:, :, ::-1]# swap bgr to rgb

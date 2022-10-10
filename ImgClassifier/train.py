@@ -25,10 +25,7 @@ def Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
         model_save_filename = os.path.join(checkpoints_dir,'img_classifier_best_epoch_{}.pth'.format(epoch))
         torch.save(cnn_model.state_dict(), model_save_filename)
     print('Saving checkpoint...')
-    torch.save({'epoch':epoch,
-                'n_iter':n_iter,
-                'best_epoch': best_epoch,
-                'best_acc_val': best_acc_val,
+    torch.save({'epoch':epoch, 'n_iter':n_iter, 'best_epoch': best_epoch, 'best_acc_val': best_acc_val,
                 'model_state_dict':cnn_model.state_dict()}, train_checkpoints_path)
     return best_acc_val, best_epoch
 
@@ -55,7 +52,7 @@ def run():
     #this is the setting for data augmentation
     transform = {}
     transform['random_horizontal_flips'] = 0.5
-    transform['random_rotation'] = [-20, 20]
+    transform['random_rotation'] = [-180, 180]
     transform['input_width'] = args.input_size
     transform['input_height'] = args.input_size
     transform['means_stds'] = args.means_stds
@@ -74,8 +71,7 @@ def run():
     print('Finish building the network')
     criterion = nn.CrossEntropyLoss()#build loss criterion
     optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)#build training optimizer
-    step_size = int(args.epochs / 3)
-    lr_train_scheduler = lr_scheduler.StepLR(optimizer_cnn_model, step_size=step_size, gamma=0.1)#build learning scheduler
+    lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[100,120], gamma=0.1)#build learning scheduler
 
     best_epoch = 0
     best_acc_val = 0.0
@@ -156,8 +152,8 @@ def run():
     best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
         valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)
 
-    the_text = 'model_type: {}, input_size: {}, means_stds:{}, lr: {}, batch_size: {}, \n'.format(
-        args.model_type, args.input_size, args.means_stds, args.lr, args.batch_size) 
+    the_text = 'model_type: {}, input_size: {}, means_stds:{}, lr: {}, batch_size: {}, use_pretrained:{} \n'.format(
+        args.model_type, args.input_size, args.means_stds, args.lr, args.batch_size, args.use_pretrained) 
     the_text += 'The best Accuracy is {} at epoch {}'.format(best_acc_val, best_epoch)
     the_text_path = os.path.join(checkpoints_dir,'train_results.txt')
     the_file = open(the_text_path, 'w')

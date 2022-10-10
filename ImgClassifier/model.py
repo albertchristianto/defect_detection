@@ -17,7 +17,7 @@ def get_model(modelType, num_output, inp_size, pretrainedPath=None):
     elif modelType == 'ResNet50':
         model = Get_ResNet50(num_output, pretrainedPath)
     elif modelType == 'EfficientNetB0':
-        model = Get_EfficientNetB0(num_output)
+        model = Get_EfficientNetB0(num_output, pretrainedPath)
     else:
         print('Please check model type!\nStopping...')
         quit()

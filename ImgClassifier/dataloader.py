@@ -31,6 +31,9 @@ class ImageClassificationDataset(Dataset):
         elif self.transformation['means_stds'] == "mt_means_stds":
             self.means = magnetic_means
             self.stds = magnetic_stds
+        elif self.transformation['means_stds'] == "road_crack_means_stds":
+            self.means = magnetic_means
+            self.stds = magnetic_stds
 
     def __getitem__(self, index):
         imgPath = self.data[index][0]
@@ -56,6 +59,9 @@ class ImageClassificationDataset(Dataset):
 
 def getLoader(dataset_root, transform, bsize = 16):
     trainData, valData, weight_samples, class_name = loadtxtfiles(dataset_root)
+
+    if transform is None:
+        return None, None, class_name
 
     trainDataset = ImageClassificationDataset(data=trainData, transform = transform)
     sampler = WeightedRandomSampler(weight_samples, len(weight_samples))

@@ -1,6 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
 from math import ceil
+
+pre_trained_weights_url = {
+    "b0":'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b0_ra-3dd342df.pth'
+}
 
 base_model = [
     #base_model_expand_ratio, channels, layers, stride, kernel_size
@@ -98,7 +103,7 @@ class InvertedResidualBlock(nn.Module):
         reduced_dim = int(in_channels / reduction)
 
         if self.expand:
-            self.expand_conv = CNNBlock( in_channels, hidden_dim, kernel_size=3, stride=1, padding=1)
+            self.expand_conv = CNNBlock( in_channels, hidden_dim, kernel_size=1, stride=1, padding=0)
 
         self.conv = nn.Sequential(
             CNNBlock(hidden_dim, hidden_dim, kernel_size, stride, padding, groups=hidden_dim),
@@ -215,8 +220,20 @@ def test():
     print(model(x).shape) # (num_examples, num_classes)
 
 #API function for building our LPR model
-def Get_EfficientNetB0(num_output):
+def Get_EfficientNetB0(num_output, pretrainedPath):
     model = EfficientNet("b0", num_output)
+    if pretrainedPath is not None:
+        the_url = pre_trained_weights_url["b0"]
+        b0_state_dict = model_zoo.load_url(the_url, model_dir=pretrainedPath)
+        weights_load = {}
+        state = model.state_dict()
+        state_keys = list(state.keys())
+        for i, the_keys in enumerate(b0_state_dict.keys()):
+            if state_keys[i].find('features') == -1:
+                continue #ignore the classifier part
+            weights_load[state_keys[i]] = b0_state_dict[the_keys]
+        state.update(weights_load)
+        model.load_state_dict(state)
     return model
 
 if __name__ == "__main__":

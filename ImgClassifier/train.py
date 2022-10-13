@@ -70,8 +70,8 @@ def run():
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, args.pretrainedPath)
     print('Finish building the network')
     criterion = nn.CrossEntropyLoss()#build loss criterion
-    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)#build training optimizer
-    lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[100,120], gamma=0.1)#build learning scheduler
+    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr) #build training optimizer
+    lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[5, 10, 210, 275], gamma=0.1) #build learning scheduler #[100,120]
 
     best_epoch = 0
     best_acc_val = 0.0
@@ -89,6 +89,8 @@ def run():
         cnn_model.load_state_dict(checkpoint['model_state_dict'])
         best_epoch = checkpoint['best_epoch']
         best_acc_val = checkpoint['best_acc_val']
+        for i in range(start_epoch):#set the correct learning rate, since we have learning rate scheduler
+            lr_train_scheduler.step()
         print('Resuming training from epoch {}'.format(start_epoch))
     else:
         try:
@@ -119,8 +121,7 @@ def run():
             #change the data type
             img = torch.autograd.Variable(img)
             label = torch.autograd.Variable(label)
-            #set gradient to zero
-            optimizer_cnn_model.zero_grad()
+            
             #inference the input
             outputs = cnn_model(img)
             #get the training prediction
@@ -129,9 +130,10 @@ def run():
             loss = criterion(outputs, label)
             #compute the gradient
             loss.backward()
-            #update the model
-            optimizer_cnn_model.step()
-            lr_train_scheduler.step()
+            
+            optimizer_cnn_model.step() #update the model
+            optimizer_cnn_model.zero_grad() #set gradient to zero
+
             running_loss += loss.item() * img.size(0)
             running_corrects += torch.sum(preds == label.data)
             writer.add_scalar('Loss_Logging/loss_iteration',loss.item(),n_iter)
@@ -148,6 +150,8 @@ def run():
         if ((epoch % args.save_freq) == 0):
             best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
                 valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)
+
+        lr_train_scheduler.step() #the learning rate scheduler
 
     best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
         valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)

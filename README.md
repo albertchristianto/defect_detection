@@ -14,7 +14,7 @@ I use the public defect detection dataset to build and test the performance of t
 The most obvious method for defect detection is image classification. In the deep learning method, there is a lot of neural network architecture, such as VGG, ResNet, EfficientNet, etc. These neural network architectures usually are used for other deep learning methods as their backbone architecture. By using image classification, we can analyze the performance of the backbone architecture and check the deployability of the architecture. You can find the image classifier implementation [here](https://github.com/albertchristianto/defect_detection/tree/main/ImgClassifier).
 
 #### Experiment for Magnetic Tile Surface Dataset
-Due to the lack of images, the problem definition for magnetic tile surface defect detection is the defect detector will classify a magnetic tile surface by sliding across the image with the size of the defect detector's input. This scheme also helps increase the detection accuracy with a smaller model. This defect detection scheme is a patch defect detector.
+Due to the lack of images, the problem definition for magnetic tile surface defect detection is the defect detector will classify a magnetic tile surface by sliding across the image with the size of the defect detector's input. This scheme also helps increase the detection accuracy with a smaller model. This defect detection scheme is a patch defect detector. Check the demonstration of this scheme [here](https://docs.google.com/presentation/d/1pR1xuDoaAntRRu5F9N6TAmnNQoNNMkn3hGWH6LbT5PU/edit#slide=id.g16623a9b199_0_183).
 
 
 Below is the performance comparison table for the [Magnetic Tile Surface Dataset](https://github.com/abin24/Magnetic-tile-defect-datasets.).

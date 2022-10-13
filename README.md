@@ -38,3 +38,4 @@ Incoming description from me. I am still building a C++ library to help me build
 
 ## Reference
 1. J. Wei, P. Zhu, X. Qian and S. Zhu, "One-stage object detection networks for inspecting the surface defects of magnetic tiles," 2019 IEEE International Conference on Imaging Systems and Techniques (IST), 2019, pp. 1-6, doi: 10.1109/IST48021.2019.9010098.
+2. Huang, Z., Chen, W., & Brilakis, I. (2022). NHA12D: A New Pavement Crack Dataset and a Comparison Study Of Crack Detection Algorithms. arXiv. https://doi.org/10.48550/arXiv.2205.01198

@@ -28,10 +28,20 @@ Below is the performance comparison table for the [Magnetic Tile Surface Dataset
 | EfficientNet-B0 - Scratch                  |                            4 M |       95.43 |
 | __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __98.34__ |
 
-From the performance, we can see that image classification tackles defect detection for the magnetic tile surface. The best backbone architecture for detecting the defect is EfficientNet-B0 achieving 98.34% accuracy, despite having fewer training parameters. Using ImageNet pre-trained weights fastens training times and achieves high accuracy. All the models trained from scratch have lower accuracy. The reason behind this phenomenon is transfer learning. This [article](https://machinelearningmastery.com/how-to-improve-performance-with-transfer-learning-for-deep-learning-neural-networks/) explains it clearly.
+The performance table above shows that image classification tackles defect detection for the magnetic tile surface. The best backbone architecture for detecting the defect is EfficientNet-B0 achieving 98.34% accuracy, despite having fewer training parameters. Using ImageNet pre-trained weights fastens training times and achieves high accuracy. All the models trained from scratch have lower accuracy. The reason behind this phenomenon is transfer learning. This [article](https://machinelearningmastery.com/how-to-improve-performance-with-transfer-learning-for-deep-learning-neural-networks/) explains it clearly.
 
 #### Experiment for NHA12D Dataset
-Incoming description from me.
+Road/pavement crack detection uses the same defect detection scheme, patch defect detector. However, the size of the patch is a fixed value(224x224). 
+
+Below is the performance comparison table for the [NHA12D Dataset](https://github.com/ZheningHuang/NHA12D-Crack-Detection-Dataset-and-Comparison-Study).
+
+| Backbone Name                              | Number of  Training Parameters | Accuracy(%) |
+| :----------------------------------------- |:------------------------------:| -----------:|
+| ResNet34 - ImageNet Pre-trained            |                           21 M |       94.31 |
+| ResNet50 - ImageNet Pre-trained            |                           23 M |       92.92 |
+| __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __93.08__ |
+
+ResNet34 achieves the best performance with 94.31% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository. I will check with the training code of the image classification and update the results.
 
 ## Continous Integration and Continous Delivery
 Incoming description from me. I am still building a C++ library to help me build an inference backend system. I am using [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) as the reference for this C++ library.

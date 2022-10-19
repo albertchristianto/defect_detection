@@ -3,7 +3,6 @@ import argparse
 from datetime import datetime
 
 import torch
-torch.manual_seed(17)
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -13,6 +12,7 @@ from model import get_model
 from dataloader import getLoader
 from utils import *
 from test import validate
+from losses.focal_loss import FocalLoss
 
 SHOW_LOG_EVERY_N_ITERATIONS = 10000
 
@@ -41,6 +41,7 @@ def run():
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, metavar='DIR',
                                             help='path to save tensorboard log and weight of the model')   
     parser.add_argument('--resume', action='store_true', default = False)
+    parser.add_argument('--focal_loss', action='store_true', default = False)
     parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used')
     parser.add_argument('--means_stds', type=str, default='mt_means_stds', help='define means and stds that will be used')
     parser.add_argument('--input_size', default=224, type=int, metavar='N', help='number of epochs to save the model')
@@ -69,9 +70,12 @@ def run():
         args.pretrainedPath = None
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, args.pretrainedPath)
     print('Finish building the network')
-    criterion = nn.CrossEntropyLoss()#build loss criterion
+    if (args.focal_loss):
+        criterion = FocalLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()#build loss criterion
     optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr) #build training optimizer
-    lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[5, 10, 210, 275], gamma=0.1) #build learning scheduler #[100,120]
+    lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[20, 40], gamma=0.1) #build learning scheduler #[100,120]
 
     best_epoch = 0
     best_acc_val = 0.0

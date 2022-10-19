@@ -14,7 +14,7 @@ I use the public defect detection dataset to build and test the performance of t
 The most obvious method for defect detection is image classification. In the deep learning method, there is a lot of neural network architecture, such as VGG, ResNet, EfficientNet, etc. These neural network architectures usually are used for other deep learning methods as their backbone architecture. By using image classification, we can analyze the performance of the backbone architecture and check the deployability of the architecture. You can find the image classifier implementation [here](https://github.com/albertchristianto/defect_detection/tree/main/ImgClassifier).
 
 #### Experiment for Magnetic Tile Surface Dataset
-Due to the lack of images, the problem definition for magnetic tile surface defect detection is the defect detector will classify a magnetic tile surface by sliding across the image with the size of the defect detector's input. This scheme also helps increase the detection accuracy with a smaller model. This defect detection scheme is a patch defect detector. Check the demonstration of this scheme [here](https://docs.google.com/presentation/d/1pR1xuDoaAntRRu5F9N6TAmnNQoNNMkn3hGWH6LbT5PU/edit#slide=id.g16623a9b199_0_183).
+Due to the lack of images, the problem definition for magnetic tile surface defect detection is the defect detector will classify a magnetic tile surface by sliding across the image with the size of the defect detector's input. This scheme also helps increase the detection accuracy with a smaller model. This defect detection scheme is a patch defect detector. The patch defect detector's input size depends on the minimum side of the input image. Check the demonstration of this scheme [here](https://docs.google.com/presentation/d/1pR1xuDoaAntRRu5F9N6TAmnNQoNNMkn3hGWH6LbT5PU/edit#slide=id.g16623a9b199_0_183).
 
 
 Below is the performance comparison table for the [Magnetic Tile Surface Dataset](https://github.com/abin24/Magnetic-tile-defect-datasets.).
@@ -37,9 +37,9 @@ Below is the performance comparison table for the [NHA12D Dataset](https://githu
 
 | Backbone Name                              | Number of  Training Parameters | Accuracy(%) |
 | :----------------------------------------- |:------------------------------:| -----------:|
-| ResNet34 - ImageNet Pre-trained            |                           21 M |       94.31 |
-| ResNet50 - ImageNet Pre-trained            |                           23 M |       92.92 |
-| __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __93.08__ |
+| __ResNet34 - ImageNet Pre-trained__        |                       __21 M__ |   __95.23__ |
+| ResNet50 - ImageNet Pre-trained            |                           23 M |       94.69 |
+| EfficientNet-B0 - ImageNet Pre-trained     |                            4 M |       93.24 |
 
 ResNet34 achieves the best performance with 94.31% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository. I will check with the training code of the image classification and update the results.
 

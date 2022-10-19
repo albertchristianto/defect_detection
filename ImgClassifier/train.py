@@ -12,7 +12,6 @@ from model import get_model
 from dataloader import getLoader
 from utils import *
 from test import validate
-from losses.focal_loss import FocalLoss
 
 SHOW_LOG_EVERY_N_ITERATIONS = 10000
 
@@ -41,7 +40,6 @@ def run():
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, metavar='DIR',
                                             help='path to save tensorboard log and weight of the model')   
     parser.add_argument('--resume', action='store_true', default = False)
-    parser.add_argument('--focal_loss', action='store_true', default = False)
     parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used')
     parser.add_argument('--means_stds', type=str, default='mt_means_stds', help='define means and stds that will be used')
     parser.add_argument('--input_size', default=224, type=int, metavar='N', help='number of epochs to save the model')
@@ -70,10 +68,7 @@ def run():
         args.pretrainedPath = None
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, args.pretrainedPath)
     print('Finish building the network')
-    if (args.focal_loss):
-        criterion = FocalLoss()
-    else:
-        criterion = nn.CrossEntropyLoss()#build loss criterion
+    criterion = nn.CrossEntropyLoss()#build loss criterion
     optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr) #build training optimizer
     lr_train_scheduler = lr_scheduler.MultiStepLR(optimizer_cnn_model, milestones=[20, 40], gamma=0.1) #build learning scheduler #[100,120]
 
@@ -132,11 +127,9 @@ def run():
             _, preds = torch.max(outputs, 1)
             #compute the loss
             loss = criterion(outputs, label)
-            #compute the gradient
-            loss.backward()
-            
-            optimizer_cnn_model.step() #update the model
             optimizer_cnn_model.zero_grad() #set gradient to zero
+            loss.backward()#compute the gradient
+            optimizer_cnn_model.step() #update the model
 
             running_loss += loss.item() * img.size(0)
             running_corrects += torch.sum(preds == label.data)

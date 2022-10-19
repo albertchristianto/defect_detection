@@ -32,8 +32,11 @@ class ImageClassificationDataset(Dataset):
             self.means = magnetic_means
             self.stds = magnetic_stds
         elif self.transformation['means_stds'] == "road_crack_means_stds":
-            self.means = magnetic_means
-            self.stds = magnetic_stds
+            self.means = road_crack_means
+            self.stds = road_crack_stds
+        elif self.transformation['means_stds'] == "private_pcb_means_stds":
+            self.means = private_pcb_means
+            self.stds = private_pcb_stds
 
     def __getitem__(self, index):
         imgPath = self.data[index][0]

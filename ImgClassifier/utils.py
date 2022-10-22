@@ -13,6 +13,15 @@ road_crack_stds = np.array([0.10422688722610474, 0.10182449221611023, 0.10056193
 private_pcb_means = np.array([0.25856706500053406, 0.22923599183559418, 0.15036101639270782], dtype=np.float32)
 private_pcb_stds = np.array([0.24933719635009766, 0.21749363839626312, 0.13782508671283722], dtype=np.float32)
 
+def get_means_stds(means_stds_path):
+    the_file = open(means_stds_path)
+    the_file = the_file.readlines()
+    means_list = the_file[0].replace('\n','').split(',')[0:3]
+    stds_list = the_file[1].replace('\n','').split(',')[0:3]
+    means = np.array(means_list, dtype=np.float32)
+    stds = np.array(stds_list, dtype=np.float32)
+    return means, stds
+
 def vgg_preprocess(image, means=vgg_means, stds=vgg_stds):
     image = image.astype(np.float32) / 255.0
     preprocessed_img = image.copy()[:, :, ::-1]# swap bgr to rgb

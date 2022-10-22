@@ -95,4 +95,4 @@ def Get_VGG(model_type, in_channels, num_output, inp_size, pretrainedPath):
 
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = Get_VGG("VGG11",3,2,224,'.').to(device)
+    model = Get_VGG("VGG11", 3, 2, 224, '.').to(device)

@@ -7,4 +7,5 @@ This repository is a re-implementation of the image classification problems usin
 5. Execute this command to test your model 
 6. Execute this command to use your model on a single image
 7. Execute this command to convert a PyTorch weights format to an Onnx weights format
+8. Execute this command to check the numbers of the model's training parameters
 # Reference

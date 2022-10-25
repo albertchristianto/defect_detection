@@ -25,19 +25,13 @@ class ImageClassificationDataset(Dataset):
         ])
 
     def define_means_stds(self):
-        if self.transformation['means_stds'] == "vgg_means_stds":
+        if self.transformation['use_vgg']:
             self.means = vgg_means
             self.stds = vgg_stds
-        elif self.transformation['means_stds'] == "mt_means_stds":
-            self.means = magnetic_means
-            self.stds = magnetic_stds
-        elif self.transformation['means_stds'] == "road_crack_means_stds":
-            self.means = road_crack_means
-            self.stds = road_crack_stds
-        elif self.transformation['means_stds'] == "private_pcb_means_stds":
-            self.means = private_pcb_means
-            self.stds = private_pcb_stds
-
+            return
+        self.means = self.transformation['means']
+        self.stds = self.transformation['stds']
+        
     def __getitem__(self, index):
         imgPath = self.data[index][0]
         label = int(self.data[index][1])
@@ -60,11 +54,15 @@ class ImageClassificationDataset(Dataset):
     def __len__(self):
         return self.numSample
 
-def getLoader(dataset_root, transform, bsize = 16):
+def getLoader(dataset_root, transform, bsize = 16, use_vgg=False):
     trainData, valData, weight_samples, class_name = loadtxtfiles(dataset_root)
 
     if transform is None:
         return None, None, class_name
+    transform['use_vgg'] = use_vgg
+    if not use_vgg:
+        means_stds_path = os.path.join(dataset_root, 'mean_stds.txt')
+        transform['means'], transform['stds'] = get_means_stds(means_stds_path)
 
     trainDataset = ImageClassificationDataset(data=trainData, transform = transform)
     sampler = WeightedRandomSampler(weight_samples, len(weight_samples))

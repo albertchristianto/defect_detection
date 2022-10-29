@@ -37,11 +37,11 @@ Below is the performance comparison table for the [NHA12D Dataset](https://githu
 
 | Backbone Name                              | Number of  Training Parameters | Accuracy(%) |
 | :----------------------------------------- |:------------------------------:| -----------:|
-| __ResNet34 - ImageNet Pre-trained__        |                       __21 M__ |   __95.23__ |
-| ResNet50 - ImageNet Pre-trained            |                           23 M |       94.69 |
-| EfficientNet-B0 - ImageNet Pre-trained     |                            4 M |       93.24 |
+|   ResNet34 - ImageNet Pre-trained          |                         21 M   |     90.62   |
+| ResNet50 - ImageNet Pre-trained            |                           23 M |       91.37 |
+| __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __92.01__ |
 
-ResNet34 achieves the best performance with 94.31% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository. I will check with the training code of the image classification and update the results.
+EfficientNet-B0 achieves the best performance with 92.01% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository in the learning rate part. I will check with the training code of the image classification and update the results.
 
 ## Continous Integration and Continous Delivery
 Incoming description from me. I am still building a C++ library to help me build an inference backend system. I am using [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) as the reference for this C++ library.

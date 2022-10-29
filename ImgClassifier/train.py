@@ -153,8 +153,8 @@ def run():
     best_acc_val, best_epoch = Saving_Checkpoint(epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, 
         valLoader, valDatasetSize, checkpoints_dir, train_checkpoints_path, writer)
 
-    the_text = 'model_type: {}, input_size: {}, means_stds:{}, lr: {}, batch_size: {}, use_pretrained:{} \n'.format(
-        args.model_type, args.input_size, args.means_stds, args.lr, args.batch_size, args.use_pretrained) 
+    the_text = 'model_type: {}, input_size: {}, lr: {}, batch_size: {}, use_pretrained:{} \n'.format(
+        args.model_type, args.input_size, args.lr, args.batch_size, args.use_pretrained) 
     the_text += 'The best Accuracy is {} at epoch {}'.format(best_acc_val, best_epoch)
     the_text_path = os.path.join(checkpoints_dir,'train_results.txt')
     the_file = open(the_text_path, 'w')

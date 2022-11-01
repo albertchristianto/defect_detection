@@ -12,6 +12,7 @@ dataset/tools/unknown_road_crack_dataset_augmentator.py
 ImgClassifier/checkpoint/
 ImgClassifier/weights/
 ImgClassifier/train.bat
+ImgClassifier/samples/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

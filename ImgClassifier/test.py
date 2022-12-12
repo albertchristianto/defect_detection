@@ -9,16 +9,15 @@ import torch
 from model import get_model
 from dataloader import getLoader
 
-def validate(args, cnn_model, valLoader, valDatasetSize):
+def validate(use_gpu, cnn_model, valLoader):
+    valDatasetSize = len(valLoader.dataset)
     print('Validating...')
     cnn_model.eval()
     correct = 0
     for i, (img, label) in enumerate(valLoader):
-        if args.use_gpu:
+        if use_gpu:
             img = img.cuda()
             label = label.cuda()
-        img = torch.autograd.Variable(img)
-        label = torch.autograd.Variable(label)
         outputs = cnn_model(img)
         _, preds = torch.max(outputs, 1)
         correct_array = preds == label.data
@@ -69,7 +68,7 @@ def run():
     ##Last validation------------------------------------------------------------------------- 
     #validate
     #set cnn_model on the val mode
-    validate(args, cnn_model, valLoader, valDatasetSize)
+    validate(args.use_gpu, cnn_model, valLoader)
 
 if __name__ == '__main__':
     run()

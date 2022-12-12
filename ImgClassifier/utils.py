@@ -4,14 +4,14 @@ import numpy as np
 vgg_means = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 vgg_stds = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
-magnetic_means = np.array([0.44145816564559937, 0.44145816564559937, 0.44145816564559937], dtype=np.float32)
-magnetic_stds = np.array([0.17827072739601135, 0.17827072739601135, 0.17827072739601135], dtype=np.float32)
-
-road_crack_means = np.array([0.5038886070251465, 0.5033256411552429, 0.5023605823516846], dtype=np.float32)
-road_crack_stds = np.array([0.10422688722610474, 0.10182449221611023, 0.10056193172931671], dtype=np.float32)
-
-private_pcb_means = np.array([0.25856706500053406, 0.22923599183559418, 0.15036101639270782], dtype=np.float32)
-private_pcb_stds = np.array([0.24933719635009766, 0.21749363839626312, 0.13782508671283722], dtype=np.float32)
+def vgg_preprocess(image, means=vgg_means, stds=vgg_stds):
+    image = image.astype(np.float32) / 255.0
+    preprocessed_img = image.copy()[:, :, ::-1]# swap bgr to rgb
+    for i in range(3):
+        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - means[i]
+        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] / stds[i]
+    preprocessed_img = preprocessed_img.transpose((2, 0, 1)).astype(np.float32)
+    return preprocessed_img
 
 def get_means_stds(means_stds_path):
     the_file = open(means_stds_path)
@@ -22,15 +22,6 @@ def get_means_stds(means_stds_path):
     stds = np.array(stds_list, dtype=np.float32)
     return means, stds
 
-def vgg_preprocess(image, means=vgg_means, stds=vgg_stds):
-    image = image.astype(np.float32) / 255.0
-    preprocessed_img = image.copy()[:, :, ::-1]# swap bgr to rgb
-    for i in range(3):
-        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] - means[i]
-        preprocessed_img[:, :, i] = preprocessed_img[:, :, i] / stds[i]
-    preprocessed_img = preprocessed_img.transpose((2, 0, 1)).astype(np.float32)
-    return preprocessed_img
-
 def get_class_name(class_name_path):
     class_name_file = open(class_name_path)
     class_name = []
@@ -40,15 +31,7 @@ def get_class_name(class_name_path):
         class_name.append(theFileNow)
     return class_name
 
-def write_class_name(classes_name_path, class_name):
-    classes_name_Txt = open(classes_name_path, 'w')
-    for class_name_now in class_name:
-        classes_name_Txt.write('{}\n'.format(class_name_now))
-    classes_name_Txt.close()
-
-def loadtxtfiles(dataset_root):
-    class_name_path = os.path.join(dataset_root, 'classes_name.txt')
-    class_name = get_class_name(class_name_path)
+def loadtxtfiles(dataset_root, class_name):
     train_data = []
     val_data = []
     len_data = {}
@@ -87,4 +70,19 @@ def loadtxtfiles(dataset_root):
         weight_samples[last_idx:(last_idx + len_data[each_class])] = weight_value[each_class]
         last_idx += len_data[each_class]
 
-    return train_data, val_data, weight_samples, class_name
+    return train_data, val_data, weight_samples
+
+def write_class_name(classes_name_path, class_name):
+    classes_name_Txt = open(classes_name_path, 'w')
+    for class_name_now in class_name:
+        classes_name_Txt.write('{}\n'.format(class_name_now))
+    classes_name_Txt.close()
+
+def write_means_stds(means_stds_path, means, stds):
+    mean_stds_Txt = open(means_stds_path, 'w')
+    for each_mean in means:
+        mean_stds_Txt.write('{},'.format(each_mean))
+    mean_stds_Txt.write('\n')
+    for each_std in stds:
+        mean_stds_Txt.write('{},'.format(each_std))
+    mean_stds_Txt.close()

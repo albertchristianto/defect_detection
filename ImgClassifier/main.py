@@ -13,7 +13,6 @@ from tensorboardX import SummaryWriter
 from model import get_model
 from dataloader import getLoader
 from utils import *
-from test import validate
 
 LOG_LEVEL = 'TRACE'
 SHOW_LOG_EVERY_N_ITERATIONS = 500
@@ -24,7 +23,7 @@ logger.remove()
 logger.add(sys.stdout, level=LOG_LEVEL)
 
 def define_load_training_param():
-    logger.trace("Define the training parameter")
+    logger.trace("Define the training-testing parameter")
     parser = argparse.ArgumentParser(description='PyTorch Image Classification Training Code by Albert Christianto')
     parser.add_argument('--dataset_root', required=True, type=str, help='path to the dataset')
     parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used')
@@ -38,6 +37,8 @@ def define_load_training_param():
     parser.add_argument('--input_size', default=224, type=int, help='number of epochs to save the model')
     parser.add_argument('--horizontal_flip_prob', default=0.5, type=float, help='initial learning rate')
     parser.add_argument('--rotation_value', default=180, type=int, help='number of epochs to save the model')
+    parser.add_argument('--mode', type=str, required=True, help='define the model type that will be used')
+    parser.add_argument('--weight_path', default=None, type=str, metavar='DIR', help='path to weight of the model')
     args = parser.parse_args()
     logger.trace("Define the augmentation parameter")
     transform = {}
@@ -97,7 +98,24 @@ def create_loss_function_optimizer_lr_scheduler(args, cnn_model):
     lr_train_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer_cnn_model, mode='max', patience = patience_param)
     return criterion, optimizer_cnn_model, lr_train_scheduler
 
-def Saving_Checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, checkpoints_dir, train_checkpoints_path, writer):
+def validate(use_gpu, cnn_model, valLoader):
+    logger.trace('Validating the performance')
+    cnn_model.eval()
+    correct = 0
+    for i, (img, label) in enumerate(valLoader):
+        if use_gpu:
+            img = img.cuda()
+            label = label.cuda()
+        outputs = cnn_model(img)
+        _, preds = torch.max(outputs, 1)
+        correct_array = preds == label.data
+        correct += torch.sum(correct_array)
+    val_acc = correct.double() / len(valLoader.dataset)
+    logger.info('Accuracy: {:.4f}'.format(val_acc))
+    cnn_model.train()
+    return val_acc
+
+def saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, checkpoints_dir, train_checkpoints_path, writer):
     val_acc = validate(use_gpu, cnn_model, valLoader)
     writer.add_scalar('Accuracy/val', val_acc, epoch)
     if (val_acc > best_acc_val):
@@ -114,13 +132,13 @@ def post_training_process(args, best_acc_epoch_val, best_epoch):
     the_text = f'model_type: {args.model_type}, input_size: {args.input_size}, lr: {args.lr},'
     the_text += f' batch_size: {args.batch_size}, use_pretrained:{args.use_pretrained} \n'
     the_text += f'The best Accuracy is {best_acc_epoch_val} at epoch {best_epoch}'
-    the_text_path = os.path.join(args.checkpoints_dir,'train_results.txt')
+    the_text_path = os.path.join(args.checkpoint_dir,'train_results.txt')
     the_file = open(the_text_path, 'w')
     the_file.write(the_text)
     the_file.close()
     logger.info(the_text)
 
-def train_process(args, class_name, cnn_model, start_epoch, n_iter, trainLoader, valLoader, criterion, optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val):
+def train_process(args, cnn_model, start_epoch, n_iter, trainLoader, valLoader, criterion, optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val):
     train_checkpoints_path = os.path.join(args.checkpoint_dir,'training_checkpoint.pth.tar')
     writer = SummaryWriter(log_dir=args.checkpoint_dir)
     use_gpu = USE_GPU and torch.cuda.is_available()
@@ -150,19 +168,27 @@ def train_process(args, class_name, cnn_model, start_epoch, n_iter, trainLoader,
         if ((epoch + 1) % args.val_freq) != 0:
             continue
         args.lr = optimizer_cnn_model.param_groups[0]['lr']
-        best_acc_epoch_val, best_epoch, val_acc = Saving_Checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_epoch_val, args, cnn_model, 
+        best_acc_epoch_val, best_epoch, val_acc = saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_epoch_val, args, cnn_model, 
             valLoader, args.checkpoint_dir, train_checkpoints_path, writer)
         lr_train_scheduler.step(val_acc)
     post_training_process(args, best_acc_epoch_val, best_epoch)
 
-def run():
+def test(args, cnn_model, valLoader):
+    cnn_model.load_state_dict(torch.load(args.weight_path))
+    use_gpu = USE_GPU and torch.cuda.is_available()
+    if use_gpu:
+        cnn_model.cuda()
+    val_acc = validate(use_gpu, cnn_model, valLoader)
+    logger.info(f'The accuracy is {val_acc}')
+
+if __name__ == '__main__':
     args, transform = define_load_training_param()
     trainLoader, valLoader, class_name = load_dataset_and_create_dataloader(args, transform)
     cnn_model = create_model(args, len(class_name))
-    best_epoch, best_acc_epoch_val, start_epoch, start_iter, args, cnn_model = resume_or_new_training(args, cnn_model)
-    criterion, optimizer_cnn_model, lr_train_scheduler = create_loss_function_optimizer_lr_scheduler(args, cnn_model)
-    train_process(args, class_name, cnn_model, start_epoch, start_iter, trainLoader, valLoader, criterion, 
-                  optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val)
-
-if __name__ == '__main__':
-    run()
+    if args.mode == 'train':
+        best_epoch, best_acc_epoch_val, start_epoch, start_iter, args, cnn_model = resume_or_new_training(args, cnn_model)
+        criterion, optimizer_cnn_model, lr_train_scheduler = create_loss_function_optimizer_lr_scheduler(args, cnn_model)
+        train_process(args, cnn_model, start_epoch, start_iter, trainLoader, valLoader, criterion, 
+                    optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val)
+    elif args.mode == 'test':
+        test(args, cnn_model, valLoader)

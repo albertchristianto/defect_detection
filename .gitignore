@@ -15,7 +15,7 @@ ImgClassifier/train.bat
 ImgClassifier/test.bat
 ImgClassifier/backup_note.txt
 ImgClassifier/samples/
-app/rsc/
+app/ui/rsc/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

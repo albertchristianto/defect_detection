@@ -11,8 +11,7 @@ from torch.optim import lr_scheduler
 from tensorboardX import SummaryWriter
 
 from model import get_model
-from dataloader import getLoader
-from utils import *
+from dataloader import *
 
 LOG_LEVEL = 'TRACE'
 SHOW_LOG_EVERY_N_ITERATIONS = 500
@@ -59,7 +58,7 @@ def load_dataset_and_create_dataloader(args, transform):
     trainLoader, valLoader = getLoader(args.dataset_root, transform, args.batch_size)
     logger.info(f'Train dataset len: {len(trainLoader.dataset)}')
     logger.info(f'Validate dataset len: {len(valLoader.dataset)}')
-    return trainLoader, valLoader, transform['class_name']
+    return trainLoader, valLoader, transform['class_name'], transform['means'], transform['stds']
 
 def create_model(args, len_class_name):
     pretrained_path = None
@@ -111,7 +110,7 @@ def validate(use_gpu, cnn_model, valLoader):
         correct_array = preds == label.data
         correct += torch.sum(correct_array)
     val_acc = correct.double() / len(valLoader.dataset)
-    logger.info('Accuracy: {:.4f}'.format(val_acc))
+    logger.info(f'The accuracy is {val_acc}')
     cnn_model.train()
     return val_acc
 
@@ -138,9 +137,13 @@ def post_training_process(args, best_acc_epoch_val, best_epoch):
     the_file.close()
     logger.info(the_text)
 
-def train_process(args, cnn_model, start_epoch, n_iter, trainLoader, valLoader, criterion, optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val):
+def train(args, class_name, means, stds, cnn_model, trainLoader, valLoader):
+    best_epoch, best_acc_epoch_val, start_epoch, n_iter, args, cnn_model = resume_or_new_training(args, cnn_model)
+    write_class_name(os.path.join(args.checkpoint_dir,'classes_name.txt'), class_name)
+    write_means_stds(os.path.join(args.checkpoint_dir,'means_stds.txt'), means, stds)
     train_checkpoints_path = os.path.join(args.checkpoint_dir,'training_checkpoint.pth.tar')
     writer = SummaryWriter(log_dir=args.checkpoint_dir)
+    criterion, optimizer_cnn_model, lr_train_scheduler = create_loss_function_optimizer_lr_scheduler(args, cnn_model)
     use_gpu = USE_GPU and torch.cuda.is_available()
     if use_gpu:
         cnn_model.cuda()
@@ -178,17 +181,15 @@ def test(args, cnn_model, valLoader):
     use_gpu = USE_GPU and torch.cuda.is_available()
     if use_gpu:
         cnn_model.cuda()
-    val_acc = validate(use_gpu, cnn_model, valLoader)
-    logger.info(f'The accuracy is {val_acc}')
+    validate(use_gpu, cnn_model, valLoader)
 
 if __name__ == '__main__':
     args, transform = define_load_training_param()
-    trainLoader, valLoader, class_name = load_dataset_and_create_dataloader(args, transform)
+    trainLoader, valLoader, class_name, means, stds = load_dataset_and_create_dataloader(args, transform)
     cnn_model = create_model(args, len(class_name))
     if args.mode == 'train':
-        best_epoch, best_acc_epoch_val, start_epoch, start_iter, args, cnn_model = resume_or_new_training(args, cnn_model)
-        criterion, optimizer_cnn_model, lr_train_scheduler = create_loss_function_optimizer_lr_scheduler(args, cnn_model)
-        train_process(args, cnn_model, start_epoch, start_iter, trainLoader, valLoader, criterion, 
-                    optimizer_cnn_model, lr_train_scheduler, best_epoch, best_acc_epoch_val)
+        train(args, class_name, means, stds, cnn_model, trainLoader, valLoader)
     elif args.mode == 'test':
         test(args, cnn_model, valLoader)
+    else:
+        logger.warning('Check your mode!')

@@ -3,6 +3,12 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from ui.mainWindow import MainWindow
+from loguru import logger
+
+LOG_LEVEL = 'TRACE'
+
+logger.remove()
+logger.add(sys.stdout, level=LOG_LEVEL)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

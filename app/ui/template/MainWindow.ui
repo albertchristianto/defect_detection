@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>640</width>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,22 +19,22 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>781</width>
-      <height>541</height>
+      <width>621</width>
+      <height>571</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QLabel" name="InputImage">
+      <widget class="QClickableLabel" name="InputImage">
        <property name="text">
-        <string>TextLabel</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="DetectButton">
        <property name="text">
-        <string>PushButton</string>
+        <string>Detect</string>
        </property>
       </widget>
      </item>
@@ -46,13 +46,20 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>640</width>
      <height>21</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QClickableLabel</class>
+   <extends>QLabel</extends>
+   <header>qclickablelabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -4,6 +4,8 @@ import argparse
 from loguru import logger
 from datetime import datetime
 
+import json
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -127,8 +129,9 @@ def saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cn
                 'model_state_dict':cnn_model.state_dict()}, train_checkpoints_path)
     return best_acc_val, best_epoch, val_acc
 
-def post_training_process(args, best_acc_epoch_val, best_epoch):
-    the_text = f'model_type: {args.model_type}, input_size: {args.input_size}, lr: {args.lr},'
+def post_training_process(args, best_acc_epoch_val, best_epoch, means, stds):
+    the_text = f'dataset root: {args.dataset_root}\n'
+    the_text += f'model_type: {args.model_type}, input_size: {args.input_size}, lr: {args.lr},'
     the_text += f' batch_size: {args.batch_size}, use_pretrained:{args.use_pretrained} \n'
     the_text += f'The best Accuracy is {best_acc_epoch_val} at epoch {best_epoch}'
     the_text_path = os.path.join(args.checkpoint_dir,'train_results.txt')
@@ -136,6 +139,15 @@ def post_training_process(args, best_acc_epoch_val, best_epoch):
     the_file.write(the_text)
     the_file.close()
     logger.info(the_text)
+
+    the_text_path = os.path.join(args.checkpoint_dir, f'{args.model_type}_ImgClassifier.json')
+    dictionary = {}
+    dictionary['input_size'] = args.input_size
+    dictionary['means'] = means
+    dictionary['stds'] = stds
+    json_object = json.dumps(dictionary, indent=4)
+    with open(the_text_path, "w") as outfile:
+        outfile.write(json_object)
 
 def train(args, class_name, means, stds, cnn_model, trainLoader, valLoader):
     best_epoch, best_acc_epoch_val, start_epoch, n_iter, args, cnn_model = resume_or_new_training(args, cnn_model)

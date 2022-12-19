@@ -6,7 +6,7 @@ from model import get_model
 import onnx
 import onnxruntime
 import numpy as np
-from utils import *
+from dataloader import get_class_name
 
 parser = argparse.ArgumentParser(description='LPR-Net 2 LibTorch. Made by Albert Christianto')
 parser.add_argument('--weight_path', default='checkpoint/20220808-1234/epoch_90.pth', type=str, metavar='DIR',
@@ -46,8 +46,10 @@ onnx_model = onnx.load(args.output_weight_path)
 onnx.checker.check_model(onnx_model)
 
 if torch.cuda.is_available():
+    print('Using CUDA!')
     ort_session = onnxruntime.InferenceSession(args.output_weight_path, None, providers=["CUDAExecutionProvider"])
 else:
+    print('Using CPU!')
     ort_session = onnxruntime.InferenceSession(args.output_weight_path, None)
 
 def to_numpy(tensor):

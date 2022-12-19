@@ -13,6 +13,8 @@ ImgClassifier/checkpoint/
 ImgClassifier/weights/
 ImgClassifier/train.bat
 ImgClassifier/test.bat
+ImgClassifier/convert.bat
+ImgClassifier/img_classifier.onnx
 ImgClassifier/backup_note.txt
 ImgClassifier/samples/
 app/ui/rsc/

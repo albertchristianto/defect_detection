@@ -129,7 +129,7 @@ def saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cn
                 'model_state_dict':cnn_model.state_dict()}, train_checkpoints_path)
     return best_acc_val, best_epoch, val_acc
 
-def post_training_process(args, best_acc_epoch_val, best_epoch, means, stds):
+def post_training_process(args, best_acc_epoch_val, best_epoch, class_name, means, stds):
     the_text = f'dataset root: {args.dataset_root}\n'
     the_text += f'model_type: {args.model_type}, input_size: {args.input_size}, lr: {args.lr},'
     the_text += f' batch_size: {args.batch_size}, use_pretrained:{args.use_pretrained} \n'
@@ -143,8 +143,9 @@ def post_training_process(args, best_acc_epoch_val, best_epoch, means, stds):
     the_text_path = os.path.join(args.checkpoint_dir, f'{args.model_type}_ImgClassifier.json')
     dictionary = {}
     dictionary['input_size'] = args.input_size
-    dictionary['means'] = means
-    dictionary['stds'] = stds
+    dictionary['means'] = list(means)
+    dictionary['stds'] = list(stds)
+    dictionary['class_name'] = class_name
     json_object = json.dumps(dictionary, indent=4)
     with open(the_text_path, "w") as outfile:
         outfile.write(json_object)
@@ -186,7 +187,7 @@ def train(args, class_name, means, stds, cnn_model, trainLoader, valLoader):
         best_acc_epoch_val, best_epoch, val_acc = saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_epoch_val, args, cnn_model, 
             valLoader, args.checkpoint_dir, train_checkpoints_path, writer)
         lr_train_scheduler.step(val_acc)
-    post_training_process(args, best_acc_epoch_val, best_epoch)
+    post_training_process(args, best_acc_epoch_val, best_epoch, class_name, means, stds)
 
 def test(args, cnn_model, valLoader):
     cnn_model.load_state_dict(torch.load(args.weight_path))

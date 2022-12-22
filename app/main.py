@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from ui.mainWindow import MainWindow
+from dd.ui.mainWindow import MainWindow
 from loguru import logger
 
 LOG_LEVEL = 'TRACE'

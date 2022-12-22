@@ -7,7 +7,7 @@ class dnn:
         self.means = means
         self.stds = stds
 
-    def forward(self):
+    def forward(self, image):
         raise NotImplementedError
 
     def preprocess(self, image):

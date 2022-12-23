@@ -3,6 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <nf/inference_core/i_InferEngine.hpp>
 #include <nf/utilities/logger.hpp>
+#include <nf/utilities/stringManipulation.hpp>
 
 namespace dd {
     class TrtLogger : public nvinfer1::ILogger {
@@ -75,95 +76,60 @@ namespace dd {
                 size *= dims.d[i];
             return size;
         }
-        std::string ParseOnnxModel(std::string module_name, std::string onnx_weight_path, int batch_size, bool force_create) {
+        std::string ParseOnnxModel(std::string onnx_weight_path, int batch_size, bool force_create) {
             if (!boost::filesystem::exists(boost::filesystem::path(onnx_weight_path)))
-                throw std::runtime_error(std::string(module_name + ": Could not find the onnx weight path!!"));//throw an error
-
-            TrtLogger mTrtLogger;
-            TRTUniquePtr<nvinfer1::ICudaEngine> mEngine{ nullptr };
-
-            TRTUniquePtr<nvinfer1::IBuilder> builder{ nvinfer1::createInferBuilder(mTrtLogger) };
-            //get the tensorRT path
-            boost::filesystem::path weight_path(onnx_weight_path);
-            std::string the_tmp_name = aio::StringSplit(onnx_weight_path, '/').back();
-            std::string weight_name = aio::StringSplit(the_tmp_name, '.')[0];
-            std::string temp_path;
-
-            if (!boost::filesystem::exists(boost::filesystem::path("./cache")))
-                boost::filesystem::create_directory(boost::filesystem::path("./cache"));
-
-            if (builder->platformHasFastFp16())
-                temp_path = "cache/" + weight_name + "_batch" + std::to_string(batch_size) + "_fp16.engine";
-            else
-                temp_path = "cache/" + weight_name + "_batch" + std::to_string(batch_size) + "_fp32.engine";
-
-            AIO_LOGGER_TRACE("{0}: Checking File Path {1}", module_name, temp_path);
-            if (boost::filesystem::exists(boost::filesystem::path(temp_path)) && !force_create) {
-                //Logging::Info("the weight path: " + mWeight);
-                return temp_path;
+                throw std::runtime_error(std::string(this->Name() + ": Could not find the onnx weight path!!"));//throw an error
+            TrtLogger the_logger;
+            TrtUniquePtr<nvinfer1::IBuilder> builder{ nvinfer1::createInferBuilder(the_logger) };
+            std::string ret_val;
+            {//define the TensorRT engine path
+                if (!boost::filesystem::exists(boost::filesystem::path("./cache")))
+                    boost::filesystem::create_directory(boost::filesystem::path("./cache"));
+                boost::filesystem::path weight_path(onnx_weight_path);
+                std::string the_tmp_name = nf::String::Split(onnx_weight_path, '/').back();
+                std::string weight_name = nf::String::Split(the_tmp_name, '.')[0];
+                if (builder->platformHasFastFp16())
+                    ret_val = "cache/" + weight_name + "_batch" + std::to_string(batch_size) + "_fp16.engine";
+                else
+                    ret_val = "cache/" + weight_name + "_batch" + std::to_string(batch_size) + "_fp32.engine";
             }
-            AIO_LOGGER_INFO("{0}: Building tensorRT engine!", module_name);
-
+            if (boost::filesystem::exists(boost::filesystem::path(ret_val)) && !force_create) {
+                NF_LOGGER_TRACE("{0}: TensorRT engine path {1}", this->Name(), ret_val);
+                return ret_val;
+            }
             const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-            TRTUniquePtr<nvinfer1::INetworkDefinition> network{ builder->createNetworkV2(explicitBatch) };
-            TRTUniquePtr<nvonnxparser::IParser> parser{ nvonnxparser::createParser(*network, mTrtLogger) };
-            TRTUniquePtr<nvinfer1::IBuilderConfig> config{ builder->createBuilderConfig() };
-            // parse ONNX
-            if (!parser->parseFromFile(onnx_weight_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR)))
-                throw std::runtime_error(std::string(module_name + ": Could not parse the Onnx model"));
-
-            // allow TensorRT to use up to 1GB of GPU memory for tactic selection.
-            config->setMaxWorkspaceSize(1ULL << 30);
-            //if (builder->platformHasFastInt8())
-            //{
-            //	AIO_LOGGER_INFO("{0}: Using INT8", module_name);
-            //	config->setFlag(nvinfer1::BuilderFlag::kINT8);
-            //}
-            //else 
-            if (builder->platformHasFastFp16())
-            {// use FP16 mode if possible
-                AIO_LOGGER_INFO("{0}: Using FP16", module_name);
+            TrtUniquePtr<nvinfer1::INetworkDefinition> network{ builder->createNetworkV2(explicitBatch) };
+            TrtUniquePtr<nvonnxparser::IParser> parser{ nvonnxparser::createParser(*network, the_logger) };
+            TrtUniquePtr<nvinfer1::IBuilderConfig> config{ builder->createBuilderConfig() };
+            if (!parser->parseFromFile(onnx_weight_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR)))//parse ONNX
+                throw std::runtime_error(std::string(this->Name() + ": Could not parse the Onnx model"));
+            config->setMaxWorkspaceSize(1ULL << 30);//allow TensorRT to use up to 1GB of GPU memory for tactic selection.
+            if (builder->platformHasFastFp16()) {
+                NF_LOGGER_TRACE("{0}: Using FP16", module_name);
                 config->setFlag(nvinfer1::BuilderFlag::kFP16);
             }
             else
-                AIO_LOGGER_INFO("{0}: Using FP32", module_name);
-
-            // we have only one image in batch
-            //Logging::Info("the max batch: " + std::to_string(mBatchSize));
-            //AIO_LOGGER_INFO("Maximum Batch Size: {0}", batch_size);
+                NF_LOGGER_TRACE("{0}: Using FP32", module_name);
             builder->setMaxBatchSize(batch_size);
-
             auto input = network->getInput(0);
             auto input_shape = input->getDimensions();
-
-            //std::cout << input_shape.d[0] << " " << input_shape.d[1] << " " << input_shape.d[2] << " " << input_shape.d[3] << " " << std::endl;
-
-            //input_shape.d[0] = 1;
             input_shape.d[0] = batch_size;
-
-            nvinfer1::IOptimizationProfile* profile = builder->createOptimizationProfile();
+            nvinfer1::IOptimizationProfile* profile = builder->createOptimizationProfile();//check NVidia TensorRT documentation, could be the source of memory leak
             profile->setDimensions(input->getName(), nvinfer1::OptProfileSelector::kMIN, input_shape);
             profile->setDimensions(input->getName(), nvinfer1::OptProfileSelector::kOPT, input_shape);
             profile->setDimensions(input->getName(), nvinfer1::OptProfileSelector::kMAX, input_shape);
-
             config->addOptimizationProfile(profile);
-            profile = nullptr;
-
-            // generate TensorRT engine optimized for the target platform
-            mEngine.reset(builder->buildEngineWithConfig(*network, *config));
-
-            TRTUniquePtr<nvinfer1::IHostMemory> modelStream{ nullptr };
-            modelStream.reset(mEngine->serialize());
-
-            AIO_LOGGER_TRACE("{0}: Saving to {1}", module_name, temp_path);
-            std::ofstream p(temp_path, std::ios::binary);
+            TrtUniquePtr<nvinfer1::ICudaEngine> the_engine{ nullptr };
+            the_engine.reset(builder->buildEngineWithConfig(*network, *config));
+            TrtUniquePtr<nvinfer1::IHostMemory> modelStream{ nullptr };
+            modelStream.reset(the_engine->serialize());
+            NF_LOGGER_TRACE("{0}: Saving to {1}", this->Name(), ret_val);
+            std::ofstream p(ret_val, std::ios::binary);
             if (!p)
-                throw std::runtime_error(std::string(module_name + ": Failed to save the tensorRT engine!!"));//throw an error
-
+                throw std::runtime_error(std::string(this->Name() + ": Failed to save the tensorRT engine!!"));
             p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-            mEngine.reset();
-            //AIO_LOGGER_INFO("done building");
-            return temp_path;
+            the_engine.reset();
+            return ret_val;
         }
     };
 }

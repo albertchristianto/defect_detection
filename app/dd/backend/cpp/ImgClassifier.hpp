@@ -14,10 +14,10 @@ namespace dd {
             LoadConfig(path_to_json);
             m_BatchSize = batch_size;
             m_GpuId = gpu_id;
-            if (mGpuId < 0)
+            if (m_GpuId < 0)
                 throw std::runtime_error(std::string(this->Name() + ": This system is using TensorRT backend!! Must use GPU to start the inference engine!!"));//throw an error
-            cudaSetDevice(mGpuId);
-            int ret = cudaStreamCreate(&mCudaStream);
+            cudaSetDevice(m_GpuId);
+            int ret = cudaStreamCreate(&m_CudaStream);
             if (ret != 0) {
                 std::string log_str = this->Name() + ": Failed to create CUDA memory stream (Direct Memory Access). Error code: " + std::to_string(ret);
                 throw std::runtime_error(log_str);//throw an error
@@ -37,19 +37,18 @@ namespace dd {
         }
         bool Init() {// initialize TensorRT engine and parse ONNX model --------------------------------------------------------------------
             try {
-                cudaSetDevice(mGpuId);
+                cudaSetDevice(m_GpuId);
                 std::vector<unsigned char> weight_buffer = this->ReadFile(m_WeightsPath);
 
-                mRuntime.reset(nvinfer1::createInferRuntime(mTrtLogger));
-                mEngine.reset(mRuntime->deserializeCudaEngine(weight_buffer.data(), weight_buffer.size()));
-                mContext.reset(mEngine->createExecutionContext());
+                m_Runtime.reset(nvinfer1::createInferRuntime(m_Logger));
+                m_Engine.reset(m_Runtime->deserializeCudaEngine(weight_buffer.data(), weight_buffer.size()));
+                m_Context.reset(m_Engine->createExecutionContext());
 
-                mBuffers.resize(mEngine->getNbBindings()); // buffers for input and output data
-                mArraySizes.resize(mEngine->getNbBindings());
-                for (size_t i = 0; i < mEngine->getNbBindings(); ++i)
-                {
-                    mArraySizes[i] = TrtGetSize(mEngine->getBindingDimensions(i));
-                    auto binding_size = mArraySizes[i] * mBatchSize * sizeof(float);
+                m_BuffersGpu.resize(m_Engine->getNbBindings()); // buffers for input and output data
+                m_ArraySizes.resize(m_Engine->getNbBindings());
+                for (size_t i = 0; i < m_Engine->getNbBindings(); ++i) {
+                    m_ArraySizes[i] = this->GetSize(m_Engine->getBindingDimensions(i));
+                    auto binding_size = m_ArraySizes[i] * m_BatchSize * sizeof(float);
                     /*std::cout <<"i: " << i << " " << mArraySizes[i] << std::endl;
                     std::cout << mEngine->getBindingDimensions(i).d[0] << " " << mEngine->getBindingDimensions(i).d[1] << " " << mEngine->getBindingDimensions(i).d[2] << " " << mEngine->getBindingDimensions(i).d[3] << " " << std::endl;*/
 

@@ -1,24 +1,19 @@
-#include <nf/inference_core/i_InferEngine.hpp>
+#include <string>
+#include <boost/filesystem.hpp>
+#include "TrtEngine.hpp"
 
 namespace dd {
     /// This interface class is used to control a inference engine.
     /// The user of this framework must inherit their deep learning engine implementtation from this class.
     template<typename SpTDatum>
-    class ImageClassifier: nf::I_InferEngine<SpTDatum> {
+    class ImageClassifier: TrtEngine<SpTDatum> {
     public:
-        template<typename SpTDatum>
-        FRtrtNet<SpTDatum>::FRtrtNet(const ModelParam& param) :
-            mEngine{ nullptr },
-            mInputBufferCpu{nullptr},
-            mContext{ nullptr }
+        ImageClassifier(std::string path_to_json, int batch_size, int gpu_id):
+            m_Engine{ nullptr }, m_InputBufferCpu{nullptr}, m_Context{ nullptr }
         {
-            mBatchSize = param.batch_size;
-
-            mGpuId = param.gpu_id;
-            mAesParam = param.aes_param;
-            LoadConfig(param.path_to_config);
-            mNetDimension = { 112, 112 };
-            std::string tmp;
+            LoadConfig(path_to_json);
+            m_BatchSize = batch_size;
+            m_GpuId = gpu_id;
             if (mGpuId < 0)
                 throw std::runtime_error(std::string(this->Name() + ": This system is using TensorRT backend!! Must use GPU to start the inference engine!!"));//throw an error
             cudaSetDevice(mGpuId);
@@ -27,60 +22,23 @@ namespace dd {
                 std::string log_str = this->Name() + ": Failed to create CUDA memory stream (Direct Memory Access). Error code: " + std::to_string(ret);
                 throw std::runtime_error(log_str);//throw an error
             }
-
-            if (mAesParam.size() > 0)
-            {
-                try {
-                    tmp = CheckCreateTensorRtEngine(this->Name(), mFRPath, mBatchSize, false, mAesParam);
-                }
-                catch (std::exception& e) {
-                    std::string log_str = this->Name() + ": " + std::string(e.what());
-                    throw std::runtime_error(log_str);//throw an error
-                }
-                catch (...) {
-                    std::string log_str = this->Name() + ": Unexpected error while loading encrypted model";
-                    throw std::runtime_error(log_str);//throw an error
-                }
-            }
-            else
-                tmp = CheckCreateTensorRtEngine(this->Name(), mFRPath, mBatchSize, false);
-            mFRPath = tmp;
-            if (!boost::filesystem::exists(boost::filesystem::path(mFRPath)))
+            m_WeightsPath = this->ParseOnnxModel(m_WeightsPath, m_BatchSize, false);
+            if (!boost::filesystem::exists(boost::filesystem::path(m_WeightsPath)))
                 throw std::runtime_error(std::string(this->Name() + ":  Couldn't find the YOLO TensorRT engine file!!"));//throw an error
-
         }
-        template<typename SpTDatum>
-        ImageClassifier<SpTDatum>::~ImageClassifier() {
-            for (void* buf : mBuffers)
+        ~ImageClassifier() {
+            for (void* buf : m_BuffersGpu)
                 cudaFree(buf);
-            cudaStreamDestroy(mCudaStream);
-            if (mInputBufferCpu != nullptr) {
-                delete[] mInputBufferCpu;
-                mInputBufferCpu = nullptr;
+            cudaStreamDestroy(m_CudaStream);
+            if (m_InputBufferCpu != nullptr) {
+                delete[] m_InputBufferCpu;
+                m_InputBufferCpu = nullptr;
             }
         }
-        template<typename SpTDatum>
-        bool FRtrtNet<SpTDatum>::Init()
-        {// initialize TensorRT engine and parse ONNX model --------------------------------------------------------------------
+        bool Init() {// initialize TensorRT engine and parse ONNX model --------------------------------------------------------------------
             try {
                 cudaSetDevice(mGpuId);
-                std::vector<unsigned char> weight_buffer;
-                if (mAesParam.size() > 0)
-                {
-                    try {
-                        weight_buffer = Encryption::AES::Decrypt(mFRPath, &mAesParam[0], 16, &mAesParam[16]);
-                    }
-                    catch (std::exception& e) {
-                        AIO_LOGGER_ERROR("{0}: {1}", this->Name(), e.what());
-                        return false;
-                    }
-                    catch (...) {
-                        AIO_LOGGER_ERROR("{0}: Unexpected error while loading encrypted model", this->Name());
-                        return false;
-                    }
-                }
-                else
-                    weight_buffer = Encryption::ReadFile(mFRPath);
+                std::vector<unsigned char> weight_buffer = this->ReadFile(m_WeightsPath);
 
                 mRuntime.reset(nvinfer1::createInferRuntime(mTrtLogger));
                 mEngine.reset(mRuntime->deserializeCudaEngine(weight_buffer.data(), weight_buffer.size()));
@@ -293,5 +251,45 @@ namespace dd {
             ////std::cout << cnt << std::endl;
             //vec_emb = std::vector<cv::Mat>();
         }
+        std::string Name() {
+            return "TRT_Image_Classifier";
+        }
+    private:
+        void LoadConfig(const std::string& path) {
+            if (!boost::filesystem::exists(boost::filesystem::path(path)))
+                throw std::runtime_error(std::string(this->Name() + ": Could not find the json config file!!!"));//throw an error
+            std::ifstream file(path);
+            nlohmann::json data;
+            file >> data;
+            m_WeightsPath = data["weights_path"];
+            m_NetDimension.width = data["input_size"];
+            m_NetDimension.height = data["input_size"];
+            m_Means = data["means"];
+            m_Stds = data["stds"];
+            m_ClassesName = data["class_name"];
+        }
+        //TensorRT engine is loaded using these variable++++
+        TrtLogger m_Logger;
+        TrtUniquePtr<nvinfer1::ICudaEngine> m_Engine;
+        TrtUniquePtr<nvinfer1::IExecutionContext> m_Context;
+        TrtUniquePtr<nvinfer1::IRuntime> m_Runtime;
+        int m_GpuId;
+        int m_BatchSize;
+        //++++++++++++++++++++++++++++++++++++++++++++++++++
+        //pointer for inference purposes--------------------
+        float* m_InputBufferCpu;
+        std::vector<void*> m_BuffersGpu;
+        cudaStream_t m_CudaStream;
+        std::vector<float> m_Means;
+        std::vector<float> m_Stds;
+        std::string m_WeightsPath;
+        std::vector<std::string>  m_ClassesName;
+        //--------------------------------------------------
+        //variable for pre-processing and post-processing===
+        cv::Size m_NetDimension;
+        std::vector<unsigned int> m_ArraySizes;
+        nvinfer1::Dims m_InputDim;//we expect only one input
+        nvinfer1::Dims m_OutputDim;//and one output
+        //==================================================
     };
 }

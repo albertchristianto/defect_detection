@@ -76,6 +76,11 @@ namespace dd {
                 size *= dims.d[i];
             return size;
         }
+        std::vector<unsigned char> ReadFile(std::string& file_path) {
+            std::ifstream instream(file_path, std::ios::in | std::ios::binary);
+            std::vector<unsigned char> data((std::istreambuf_iterator<unsigned char>(instream)), std::istreambuf_iterator<unsigned char>());
+            return data;
+        }
         std::string ParseOnnxModel(std::string onnx_weight_path, int batch_size, bool force_create) {
             if (!boost::filesystem::exists(boost::filesystem::path(onnx_weight_path)))
                 throw std::runtime_error(std::string(this->Name() + ": Could not find the onnx weight path!!"));//throw an error

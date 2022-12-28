@@ -1,5 +1,6 @@
 #include <string>
 #include <boost/filesystem.hpp>
+#include <nlohmann/json.hpp>
 #include "TrtEngine.hpp"
 
 namespace dd {

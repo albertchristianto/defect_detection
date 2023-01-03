@@ -4,11 +4,27 @@
 #include <exception>
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
+#include <nf/utilities/logger.hpp>
+
+#define LOG_LEVEL NF_LOGGER_LEVEL_TRACE
+#define SHOW_IN_CMD_PROMPT true //set it to false if you want to 
 
 int main() {
+    if (!(NF_LOGGER_INITIALIZE()))
+        NF_LOGGER_INIT(SHOW_IN_CMD_PROMPT, LOG_LEVEL);// Initialize the logger system. IT IS A MUST TO ADD THIS LINE OF CODE!!!!
+
+    NF_LOGGER_TRACE("this is trace logging!");
+    NF_LOGGER_INFO("this is info logging!");
+    NF_LOGGER_WARN("this is warning logging!");
+    NF_LOGGER_CRITICAL("this is critical logging!");
+    NF_LOGGER_ERROR("this is error logging!");
+
+    if (NF_LOGGER_INITIALIZE())
+        NF_LOGGER_CLOSE();// Close the logger system. IT IS A MUST TO ADD THIS LINE OF CODE!!!!
+
     std::string the_path = "ResNet50_ImgClassifier.json";
     if (!boost::filesystem::exists(boost::filesystem::path(the_path))) {
-        std::cout << "Heyy: Could not find the json config file!!!\n";//throw an error
+        NF_LOGGER_ERROR("Heyy: Could not find the json config file!!!");//throw an error
         return -1;
     }
     std::ifstream f(the_path);

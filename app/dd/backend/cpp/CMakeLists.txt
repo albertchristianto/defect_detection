@@ -29,5 +29,14 @@ set(NLOHMANN_JSON_INCLUDE_DIR third_party/json/include)
 add_subdirectory(${NLOHMANN_JSON_DIR})
 include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
 
+#nf library
+if(NOT night_fury_DIR)
+    set(night_fury_DIR E:/Albert_Christianto/Project/night_fury/build/install) # either set it here or from the command line  
+endif()
+
+find_package(night_fury 0.0.1 REQUIRED)
+message("yes? ${NIGHT_FURY_LIBRARIES}")
+include_directories(${NIGHT_FURY_INCLUDE_DIRS})
+
 add_executable(DefectDetectionCppTest src/test.cpp)
-target_link_libraries(DefectDetectionCppTest PRIVATE nlohmann_json::nlohmann_json Boost::filesystem)
+target_link_libraries(DefectDetectionCppTest PRIVATE nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES})

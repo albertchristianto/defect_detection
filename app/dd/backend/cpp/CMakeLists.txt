@@ -1,10 +1,13 @@
-cmake_minimum_required(VERSION 3.0)
-project(DefectDetectionCpp)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+cmake_minimum_required(VERSION 3.10)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
+
+project(DefectDetectionCpp)
 
 #boost library
 set(Boost_USE_STATIC_LIBS ON)
@@ -29,14 +32,31 @@ set(NLOHMANN_JSON_INCLUDE_DIR third_party/json/include)
 add_subdirectory(${NLOHMANN_JSON_DIR})
 include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
 
-#nf library
+#night_fury library
 if(NOT night_fury_DIR)
     set(night_fury_DIR E:/Albert_Christianto/Project/night_fury/build/install) # either set it here or from the command line  
 endif()
-
 find_package(night_fury 0.0.1 REQUIRED)
-message("yes? ${NIGHT_FURY_LIBRARIES}")
-include_directories(${NIGHT_FURY_INCLUDE_DIRS})
 
-add_executable(DefectDetectionCppTest src/test.cpp)
-target_link_libraries(DefectDetectionCppTest PRIVATE nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES})
+# setup CUDA and TensorRT
+find_package(CUDA REQUIRED)
+message(STATUS "    libraries: ${CUDA_LIBRARIES}")
+message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
+include_directories(${CUDA_INCLUDE_DIRS})
+enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
+if(NOT TensorRT_DIR)
+    set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.1.7) # either set it here or from the command line  
+endif()
+if(NOT TensorRT_INCLUDE_DIRS)
+    set(TensorRT_INCLUDE_DIRS "${TensorRT_DIR}/include") # either set it here or from the command line  
+endif()
+if(NOT TensorRT_LIBRARY_DIRS)
+    set(TensorRT_LIBRARY_DIRS "${TensorRT_DIR}/lib") # either set it here or from the command line  
+endif()
+include_directories(${TensorRT_INCLUDE_DIRS})# Add the TensorRT include directories
+link_directories(${TensorRT_LIBRARY_DIRS})# Add the TensorRT library directories
+set(TensorRT_LIBRARIES "nvinfer" "nvinfer_plugin" "nvonnxparser" "nvparsers")
+
+add_executable(DefectDetectionCppTest src/test.cpp src/TrtEngine.cpp)
+target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS})
+target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES})

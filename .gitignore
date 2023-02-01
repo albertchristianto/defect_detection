@@ -19,7 +19,6 @@ ImgClassifier/backup_note.txt
 ImgClassifier/samples/
 app/dd/ui/rsc/
 app/weights/
-app/dd/backend/cpp/build_commands.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -155,7 +154,6 @@ my_build_command.txt
 # My Files
 .vscode/
 .vs/
-.vsTemp/
 build/
 doc/
 docs/

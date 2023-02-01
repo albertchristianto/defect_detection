@@ -155,6 +155,7 @@ my_build_command.txt
 # My Files
 .vscode/
 .vs/
+.vsTemp/
 build/
 doc/
 docs/

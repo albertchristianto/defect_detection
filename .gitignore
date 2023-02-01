@@ -154,7 +154,6 @@ dmypy.json
 my_build_command.txt
 # My Files
 .vscode/
-.vsTemp/
 .vs/
 build/
 doc/

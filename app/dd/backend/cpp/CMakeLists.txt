@@ -24,6 +24,10 @@ find_package(Boost 1.76.0 REQUIRED filesystem)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
+#argparse library
+set(ARGPARSE_INCLUDE_DIR third_party/argparse/include)
+include_directories(${ARGPARSE_INCLUDE_DIR})
+
 #json library
 set(JSON_Install OFF CACHE INTERNAL "")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
@@ -40,9 +44,8 @@ find_package(night_fury 0.0.1 REQUIRED)
 
 # setup CUDA and TensorRT
 find_package(CUDA REQUIRED)
-message(STATUS "    libraries: ${CUDA_LIBRARIES}")
-message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
-include_directories(${CUDA_INCLUDE_DIRS})
+# message(STATUS "    libraries: ${CUDA_LIBRARIES}")
+# message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
 enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
 if(NOT TensorRT_DIR)
     set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.1.7) # either set it here or from the command line  
@@ -53,10 +56,13 @@ endif()
 if(NOT TensorRT_LIBRARY_DIRS)
     set(TensorRT_LIBRARY_DIRS "${TensorRT_DIR}/lib") # either set it here or from the command line  
 endif()
-include_directories(${TensorRT_INCLUDE_DIRS})# Add the TensorRT include directories
 link_directories(${TensorRT_LIBRARY_DIRS})# Add the TensorRT library directories
 set(TensorRT_LIBRARIES "nvinfer" "nvinfer_plugin" "nvonnxparser" "nvparsers")
 
 add_executable(DefectDetectionCppTest src/test.cpp src/TrtEngine.cpp)
-target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS})
+target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
 target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES})
+
+add_executable(OnnxTrtEngineGenerator src/TrtEngineGenerator.cpp src/TrtEngine.cpp)
+target_include_directories(OnnxTrtEngineGenerator PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
+target_link_libraries(OnnxTrtEngineGenerator PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES})

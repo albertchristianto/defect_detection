@@ -1,3 +1,6 @@
 [submodule "app/dd/backend/cpp/third_party/json"]
 	path = app/dd/backend/cpp/third_party/json
 	url = https://github.com/nlohmann/json
+[submodule "app/dd/backend/cpp/third_party/argparse"]
+	path = app/dd/backend/cpp/third_party/argparse
+	url = https://github.com/p-ranav/argparse

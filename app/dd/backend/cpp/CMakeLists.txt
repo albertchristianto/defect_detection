@@ -46,7 +46,7 @@ find_package(night_fury 0.0.1 REQUIRED)
 find_package(CUDA REQUIRED)
 # message(STATUS "    libraries: ${CUDA_LIBRARIES}")
 # message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
-enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
+# enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
 if(NOT TensorRT_DIR)
     set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.3.1) # either set it here or from the command line  
 endif()
@@ -59,10 +59,21 @@ endif()
 link_directories(${TensorRT_LIBRARY_DIRS})# Add the TensorRT library directories
 set(TensorRT_LIBRARIES "nvinfer" "nvinfer_plugin" "nvonnxparser" "nvparsers")
 
+#setup opencv
+if(NOT OpenCV_DIR)
+    set(OpenCV_DIR E:/Albert_Christianto/third_party/opencv-python/_skbuild/win-amd64-3.9/cmake-install) # either set it here or from the command line  
+endif()
+find_package(OpenCV)
+
+add_compile_definitions(DD_BACKEND_EXPORTS)
+add_library(DdBackend src/Datum.cpp src/ImgClassifier.cpp src/TrtEngine.cpp)
+target_include_directories(DdBackend PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(DdBackend PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
+
 add_executable(DefectDetectionCppTest src/test.cpp src/TrtEngine.cpp)
-target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
-target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES})
+target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(OnnxTrtEngineGenerator src/TrtEngineGenerator.cpp src/TrtEngine.cpp)
-target_include_directories(OnnxTrtEngineGenerator PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS})
-target_link_libraries(OnnxTrtEngineGenerator PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES})
+target_include_directories(OnnxTrtEngineGenerator PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(OnnxTrtEngineGenerator PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})

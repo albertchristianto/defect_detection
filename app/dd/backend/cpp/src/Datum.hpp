@@ -8,6 +8,7 @@
 #include <nf/async/worker/i_Worker.hpp>
 #include <nf/async/sub_thread/i_SubThread.hpp>
 #include <nf/async/thread.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace dd {
     struct DD_BACKEND Datum {

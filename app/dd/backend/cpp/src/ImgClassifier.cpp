@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 #include "TrtEngine.hpp"
+#include "Datum.hpp"
 
 namespace dd {
     /// This interface class is used to control a inference engine.
@@ -89,11 +90,11 @@ namespace dd {
         for (int b = 0; b < the_datas.size(); b++) {
             cv::Mat pr_img;
             cv::resize(the_datas[b]->cvInputData, pr_img, m_NetDimension);
-
+            pr_img.convertTo(pr_img, CV_32FC3, 1.0/255.0);
             for (int j = 0; j < m_NetDimension.height * m_NetDimension.width; j++) {
-                m_InputBufferCpu[j] = (pr_img.at<cv::Vec3b>(j)[2] - 127.5f) / 127.5f;
-                m_InputBufferCpu[j + m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[1] - 127.5f) / 127.5f;
-                m_InputBufferCpu[j + 2 * m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[0] - 127.5f) / 127.5f;
+                m_InputBufferCpu[j] = (pr_img.at<cv::Vec3b>(j)[2] - m_Means[0]) / m_Stds[0];
+                m_InputBufferCpu[j + m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[1] - m_Means[1]) / m_Stds[1];
+                m_InputBufferCpu[j + 2 * m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[0] - m_Means[2]) / m_Stds[2];
             }
             cudaMemcpyAsync((float*)m_BuffersGpu[0], m_InputBufferCpu, m_ArraySizes[0] * sizeof(float), cudaMemcpyHostToDevice, m_CudaStream);
             m_Context->enqueue(m_BatchSize, m_BuffersGpu.data(), m_CudaStream, nullptr);
@@ -123,4 +124,6 @@ namespace dd {
         m_Stds = data["stds"];
         m_ClassesName = data["class_name"];
     }
+    COMPILE_TEMPLATE_DATUM(ImageClassifier);
+    DEFINE_TEMPLATE_DATUM(ImageClassifier);
 }

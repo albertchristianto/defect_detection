@@ -15,10 +15,10 @@ if(NOT BOOST_DIR)
     set(BOOST_DIR E:/Albert_Christianto/third_party/boost_1_76_0) # either set it here or from the command line  
 endif()
 if(NOT Boost_INCLUDE_DIR)
-    set(Boost_INCLUDE_DIR E:/Albert_Christianto/third_party/boost_1_76_0) # either set it here or from the command line  
+    set(Boost_INCLUDE_DIR "${BOOST_DIR}") # either set it here or from the command line  
 endif()
 if(NOT Boost_LIBRARY_DIR)
-    set(Boost_LIBRARY_DIR E:/Albert_Christianto/third_party/boost_1_76_0/stage/lib) # either set it here or from the command line  
+    set(Boost_LIBRARY_DIR "${BOOST_DIR}/stage/lib") # either set it here or from the command line  
 endif()
 find_package(Boost 1.76.0 REQUIRED filesystem)
 include_directories(${Boost_INCLUDE_DIR})
@@ -48,7 +48,7 @@ find_package(CUDA REQUIRED)
 # message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
 enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
 if(NOT TensorRT_DIR)
-    set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.1.7) # either set it here or from the command line  
+    set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.3.1) # either set it here or from the command line  
 endif()
 if(NOT TensorRT_INCLUDE_DIRS)
     set(TensorRT_INCLUDE_DIRS "${TensorRT_DIR}/include") # either set it here or from the command line  

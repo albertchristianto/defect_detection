@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TRT_ENGINE_HPP
+#define TRT_ENGINE_HPP
 #include <string>
 #include <memory>
 #include <NvInfer.h>
@@ -89,3 +90,4 @@ namespace dd {
         }
     };
 }
+#endif

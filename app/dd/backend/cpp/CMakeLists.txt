@@ -66,14 +66,14 @@ endif()
 find_package(OpenCV)
 
 add_compile_definitions(DD_BACKEND_EXPORTS)
-add_library(DdBackend src/Datum.cpp src/ImgClassifier.cpp src/TrtEngine.cpp)
+add_library(DdBackend SHARED src/Datum.cpp src/ImgClassifier.cpp src/TrtUtils.cpp)
 target_include_directories(DdBackend PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DdBackend PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
 
-add_executable(DefectDetectionCppTest src/test.cpp src/TrtEngine.cpp)
+add_executable(DefectDetectionCppTest src/test.cpp src/TrtUtils.cpp)
 target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
 
-add_executable(OnnxTrtEngineGenerator src/TrtEngineGenerator.cpp src/TrtEngine.cpp)
+add_executable(OnnxTrtEngineGenerator src/TrtEngineGenerator.cpp src/TrtUtils.cpp)
 target_include_directories(OnnxTrtEngineGenerator PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(OnnxTrtEngineGenerator PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})

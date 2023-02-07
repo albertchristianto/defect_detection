@@ -1,13 +1,15 @@
 #ifndef IMAGE_CLASSIFIER_HPP
 #define IMAGE_CLASSIFIER_HPP
 
-#include "TrtEngine.hpp"
+#include <opencv2/opencv.hpp>
+#include <nf/inference_core/i_InferEngine.hpp>
+
+#include "TrtUtils.hpp"
+#include "Datum.hpp"
 
 namespace dd {
-    /// This interface class is used to control a inference engine.
-    /// The user of this framework must inherit their deep learning engine implementtation from this class.
     template<typename SpTDatum>
-    class ImageClassifier: TrtEngine<SpTDatum> {
+    class ImageClassifier: public nf::I_InferEngine<SpTDatum> {
     public:
         ImageClassifier(std::string path_to_json, int batch_size, int gpu_id);
         ~ImageClassifier();
@@ -17,8 +19,9 @@ namespace dd {
          * @param the_datas batch data which to be processed
          */
         void Forward(std::vector<SpTDatum> &the_datas);
-        void WarmUp(int n_times);
+        bool IsReady();
         std::string Name();
+        void WarmUp(int n_times);
     private:
         void LoadConfig(const std::string& path);
         //TensorRT engine is loaded using these variable++++
@@ -44,6 +47,7 @@ namespace dd {
         nvinfer1::Dims m_InputDim;//we expect only one input
         nvinfer1::Dims m_OutputDim;//and one output
         //==================================================
+        DELETE_COPY(ImageClassifier);
     };
 }
 #endif

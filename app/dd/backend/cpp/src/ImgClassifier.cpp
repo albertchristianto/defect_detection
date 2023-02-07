@@ -1,15 +1,14 @@
+#include "ImgClassifier.hpp"
 #include <string>
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
-#include "TrtEngine.hpp"
-#include "Datum.hpp"
 
 namespace dd {
     /// This interface class is used to control a inference engine.
     /// The user of this framework must inherit their deep learning engine implementtation from this class.
     template<typename SpTDatum>
     ImageClassifier<SpTDatum>::ImageClassifier(std::string path_to_json, int batch_size, int gpu_id):
-        m_Engine{ nullptr }, m_InputBufferCpu{nullptr}, m_Context{ nullptr }
+        m_Engine{ nullptr }, m_InputBufferCpu{ nullptr }, m_Context{ nullptr }
     {
         LoadConfig(path_to_json);
         m_BatchSize = batch_size;
@@ -22,7 +21,7 @@ namespace dd {
             std::string log_str = this->Name() + ": Failed to create CUDA memory stream (Direct Memory Access). Error code: " + std::to_string(ret);
             throw std::runtime_error(log_str);//throw an error
         }
-        m_WeightsPath = TrtParseOnnxModel(m_WeightsPath, m_BatchSize, false);
+        m_WeightsPath = TrtParseOnnxModel(this->Name(), m_WeightsPath, m_BatchSize, false);
         if (!boost::filesystem::exists(boost::filesystem::path(m_WeightsPath)))
             throw std::runtime_error(std::string(this->Name() + ":  Couldn't find the YOLO TensorRT engine file!!"));//throw an error
     }
@@ -37,10 +36,21 @@ namespace dd {
         }
     }
     template<typename SpTDatum>
+    bool ImageClassifier<SpTDatum>::IsReady() {
+        try {
+            this->WarmUp(1);
+        }
+        catch (std::exception& e) {
+            NF_LOGGER_ERROR("{0}: {1}", this->Name(), e.what());
+            return false;
+        }
+        return true;
+    }
+    template<typename SpTDatum>
     bool ImageClassifier<SpTDatum>::Init() {// initialize TensorRT engine and parse ONNX model --------------------------------------------------------------------
         try {
             cudaSetDevice(m_GpuId);
-            std::vector<unsigned char> weight_buffer = this->ReadFile(m_WeightsPath);
+            std::vector<unsigned char> weight_buffer = TrtReadEngineFile(m_WeightsPath);
 
             m_Runtime.reset(nvinfer1::createInferRuntime(m_Logger));
             m_Engine.reset(m_Runtime->deserializeCudaEngine(weight_buffer.data(), weight_buffer.size()));
@@ -49,7 +59,7 @@ namespace dd {
             m_BuffersGpu.resize(m_Engine->getNbBindings()); // buffers for input and output data
             m_ArraySizes.resize(m_Engine->getNbBindings());
             for (size_t i = 0; i < m_Engine->getNbBindings(); ++i) {
-                m_ArraySizes[i] = this->GetSize(m_Engine->getBindingDimensions(i));
+                m_ArraySizes[i] = TrtGetSize(m_Engine->getBindingDimensions(i));
                 auto binding_size = m_ArraySizes[i] * m_BatchSize * sizeof(float);
                 m_ArraySizes[i] = binding_size;
                 cudaMalloc(&m_BuffersGpu[i], binding_size);
@@ -99,10 +109,10 @@ namespace dd {
             cudaMemcpyAsync((float*)m_BuffersGpu[0], m_InputBufferCpu, m_ArraySizes[0] * sizeof(float), cudaMemcpyHostToDevice, m_CudaStream);
             m_Context->enqueue(m_BatchSize, m_BuffersGpu.data(), m_CudaStream, nullptr);
 
-            int outSize = int(mArraySizes[1] / sizeof(float) / mBatchSize);
-            std::vector<float> cpu_output(outSize*mBatchSize);
-            cudaMemcpyAsync(cpu_output.data(), (float*)mBuffers[1], mArraySizes[1], cudaMemcpyDeviceToHost, mCudaStream);
-            cudaStreamSynchronize(mCudaStream);
+            int outSize = int(m_ArraySizes[1] / sizeof(float) / m_BatchSize);
+            std::vector<float> cpu_output(outSize*m_BatchSize);
+            cudaMemcpyAsync(cpu_output.data(), (float*)m_BuffersGpu[1], m_ArraySizes[1], cudaMemcpyDeviceToHost, m_CudaStream);
+            cudaStreamSynchronize(m_CudaStream);
 
         }
     }
@@ -115,14 +125,13 @@ namespace dd {
         if (!boost::filesystem::exists(boost::filesystem::path(path)))
             throw std::runtime_error(std::string(this->Name() + ": Could not find the json config file!!!"));//throw an error
         std::ifstream file(path);
-        nlohmann::json data;
-        file >> data;
-        m_WeightsPath = data["weights_path"];
-        m_NetDimension.width = data["input_size"];
-        m_NetDimension.height = data["input_size"];
-        m_Means = data["means"];
-        m_Stds = data["stds"];
-        m_ClassesName = data["class_name"];
+        nlohmann::json data = nlohmann::json::parse(file);
+        m_WeightsPath = data["weights_path"].get<std::string>();
+        m_NetDimension.width = data["input_size"].get<int>();
+        m_NetDimension.height = data["input_size"].get<int>();
+        m_Means = data["means"].get<std::vector<float>>();
+        m_Stds = data["stds"].get<std::vector<float>>();
+        m_ClassesName = data["class_name"].get<std::vector<std::string>>();
     }
     COMPILE_TEMPLATE_DATUM(ImageClassifier);
     DEFINE_TEMPLATE_DATUM(ImageClassifier);

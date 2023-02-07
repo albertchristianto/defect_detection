@@ -1,8 +1,11 @@
-#include "TrtEngine.hpp"
+#include "TrtUtils.hpp"
+#include <fstream>
+#include <vector>
 #include <NvOnnxParser.h>
+#include <nf/utilities/stringManipulation.hpp>
 
 namespace dd {
-    std::string TrtParseOnnxModel(std::string& module_name, std::string onnx_weight_path, int batch_size, bool force_create) {
+    std::string TrtParseOnnxModel(std::string module_name, std::string onnx_weight_path, int batch_size, bool force_create) {
         if (!boost::filesystem::exists(boost::filesystem::path(onnx_weight_path)))
             throw std::runtime_error(std::string(module_name + ": Could not find the onnx weight path!!"));//throw an error
         TrtLogger the_logger;
@@ -56,5 +59,26 @@ namespace dd {
         p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
         the_engine.reset();
         return ret_val;
+    }
+    size_t TrtGetSize(const nvinfer1::Dims& dims) {// calculate size of tensor from tensorRT
+        size_t size = 1;
+        for (size_t i = 0; i < dims.nbDims; ++i)
+            size *= dims.d[i];
+        return size;
+    }
+    std::vector<unsigned char> TrtReadEngineFile(std::string& file_path) {
+        // open the file:
+        std::streampos fileSize;
+        std::ifstream file(file_path, std::ios::binary);
+
+        // get its size:
+        file.seekg(0, std::ios::end);
+        fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+
+        // read the data:
+        std::vector<unsigned char> fileData(fileSize);
+        file.read((char*) &fileData[0], fileSize);
+        return fileData;
     }
 }

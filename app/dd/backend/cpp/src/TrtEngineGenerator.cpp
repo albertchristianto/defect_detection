@@ -1,7 +1,7 @@
 #include <string>
 #include <argparse/argparse.hpp>
 #include <nf/utilities/logger.hpp>
-#include "TrtEngine.hpp"
+#include "TrtUtils.hpp"
 
 #define LOG_LEVEL NF_LOGGER_LEVEL_TRACE
 #define SHOW_IN_CMD_PROMPT true //set it to false if you want to use txt files

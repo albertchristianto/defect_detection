@@ -19,9 +19,6 @@ int main() {
     NF_LOGGER_CRITICAL("this is critical logging!");
     NF_LOGGER_ERROR("this is error logging!");
 
-    if (NF_LOGGER_INITIALIZE())
-        NF_LOGGER_CLOSE();// Close the logger system. IT IS A MUST TO ADD THIS LINE OF CODE!!!!
-
     std::string the_path = "ResNet50_ImgClassifier.json";
     if (!boost::filesystem::exists(boost::filesystem::path(the_path))) {
         NF_LOGGER_ERROR("Heyy: Could not find the json config file!!!");//throw an error
@@ -42,6 +39,9 @@ int main() {
     for (int i = 0; i < class_name.size(); ++i)
         std::cout << class_name[i] << ", ";
     std::cout << std::endl;
+
+    if (NF_LOGGER_INITIALIZE())
+        NF_LOGGER_CLOSE();// Close the logger system. IT IS A MUST TO ADD THIS LINE OF CODE!!!!
 
     return 0;
 }

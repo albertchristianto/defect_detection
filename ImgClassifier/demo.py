@@ -3,7 +3,7 @@ import torch
 import cv2
 
 from model import get_model
-from utils import *
+from dataloader import *
 
 def run():
     parser = argparse.ArgumentParser(description='PyTorch Tiny ImageNet Classification Testing Code by Albert Christianto')

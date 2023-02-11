@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <boost/filesystem.hpp>
 #include <nf/utilities/logger.hpp>
+#include <cuda_runtime_api.h>
 
 namespace dd {
     /// This interface class is used to control a inference engine.
@@ -104,11 +105,10 @@ namespace dd {
         for (int b = 0; b < the_datas.size(); b++) {
             cv::Mat pr_img;
             cv::resize(the_datas[b]->cvInputData, pr_img, m_NetDimension);
-            pr_img.convertTo(pr_img, CV_32FC3, 1.0f / 255.0f);
             for (int j = 0; j < m_NetDimension.height * m_NetDimension.width; j++) {
-                m_InputBufferCpu[j] = (pr_img.at<cv::Vec3b>(j)[2] - m_Means[0]) / m_Stds[0];
-                m_InputBufferCpu[j + m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[1] - m_Means[1]) / m_Stds[1];
-                m_InputBufferCpu[j + 2 * m_NetDimension.height * m_NetDimension.width] = (pr_img.at<cv::Vec3b>(j)[0] - m_Means[2]) / m_Stds[2];
+                m_InputBufferCpu[j] = ((pr_img.at<cv::Vec3b>(j)[2] * 0.00392156f) - m_Means[0]) / m_Stds[0];
+                m_InputBufferCpu[j + m_NetDimension.height * m_NetDimension.width] = ((pr_img.at<cv::Vec3b>(j)[1] * 0.00392156f) - m_Means[1]) / m_Stds[1];
+                m_InputBufferCpu[j + 2 * m_NetDimension.height * m_NetDimension.width] = ((pr_img.at<cv::Vec3b>(j)[0] * 0.00392156f) - m_Means[2]) / m_Stds[2];
             }
             cudaMemcpyAsync(m_BuffersGpu[0], m_InputBufferCpu, m_ArraySizes[0] * sizeof(float), cudaMemcpyHostToDevice, m_CudaStream);
             m_Context->enqueue(m_BatchSize, m_BuffersGpu.data(), m_CudaStream, nullptr);
@@ -145,7 +145,9 @@ namespace dd {
         m_NetDimension.width = data["input_size"].get<int>();
         m_NetDimension.height = data["input_size"].get<int>();
         m_Means = data["means"].get<std::vector<float>>();
+        //NF_LOGGER_TRACE("{0}: {1}x{2}x{3}", this->Name(), m_Means[0], m_Means[1], m_Means[2]);
         m_Stds = data["stds"].get<std::vector<float>>();
+        //NF_LOGGER_TRACE("{0}: {1}x{2}x{3}", this->Name(), m_Stds[0], m_Stds[1], m_Stds[2]);
         m_ClassesName = data["class_name"].get<std::vector<std::string>>();
     }
     COMPILE_TEMPLATE_DATUM(ImageClassifier);

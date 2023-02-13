@@ -9,11 +9,12 @@
 #include <nf/async/queue/i_Queue.hpp>
 #include <nf/async/worker/i_Worker.hpp>
 #include <nf/async/sub_thread/i_SubThread.hpp>
+#include <nf/async/base_datum.hpp>
 #include <nf/async/thread.hpp>
 #include <opencv2/opencv.hpp>
 
 namespace dd {
-    struct DD_BACKEND_API Datum {
+    struct DD_BACKEND_API Datum: public nf::BaseDatum {
         //This is the general datum
         //////////////////////////////////////////
         /// PLEASE DON'T USE NAKED POINTERS    ///
@@ -25,8 +26,6 @@ namespace dd {
         cv::Mat cvInputData;//frame data => make sure that the data isn't modified by the system
         std::string className;//image classification results
         float confScore;
-        //faster data access
-        std::atomic<bool> finished;//variable to give a finished signal
 
         Datum();
         ~Datum();

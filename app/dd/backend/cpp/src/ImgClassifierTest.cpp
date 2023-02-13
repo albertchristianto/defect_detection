@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     std::string the_config_path = program.get<std::string>("--config_path");
     std::string the_image_path = program.get<std::string>("--image_path");
-    std::shared_ptr<nf::I_InferEngine<BASE_DATUM_SP>> the_engine = std::make_shared<dd::ImageClassifier<BASE_DATUM_SP>>(the_config_path, 1, 0);
+    std::shared_ptr<nf::I_InferEngine<BASE_DATUM_SP>> the_engine = std::make_shared<dd::ImageClassifier<BASE_DATUM_SP>>(the_config_path, 0);
     if (!the_engine->Init()) {
         NF_LOGGER_ERROR("{0}: Failed to init the engine!!", program_name);
         return -1;

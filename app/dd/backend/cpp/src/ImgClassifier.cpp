@@ -9,11 +9,10 @@ namespace dd {
     /// This interface class is used to control a inference engine.
     /// The user of this framework must inherit their deep learning engine implementtation from this class.
     template<typename SpTDatum>
-    ImageClassifier<SpTDatum>::ImageClassifier(std::string path_to_json, int batch_size, int gpu_id):
+    ImageClassifier<SpTDatum>::ImageClassifier(std::string path_to_json, int gpu_id):
         m_Engine{ nullptr }, m_InputBufferCpu{ nullptr }, m_Context{ nullptr }
     {
         LoadConfig(path_to_json);
-        m_BatchSize = batch_size;
         m_GpuId = gpu_id;
         if (m_GpuId < 0)
             throw std::runtime_error(std::string(this->Name() + ": This system is using TensorRT backend!! Must use GPU to start the inference engine!!"));//throw an error
@@ -144,6 +143,7 @@ namespace dd {
         m_WeightsPath = data["weights_path"].get<std::string>();
         m_NetDimension.width = data["input_size"].get<int>();
         m_NetDimension.height = data["input_size"].get<int>();
+        m_BatchSize = data["batch_size"].get<int>();
         m_Means = data["means"].get<std::vector<float>>();
         //NF_LOGGER_TRACE("{0}: {1}x{2}x{3}", this->Name(), m_Means[0], m_Means[1], m_Means[2]);
         m_Stds = data["stds"].get<std::vector<float>>();

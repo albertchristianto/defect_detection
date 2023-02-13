@@ -6,7 +6,7 @@ namespace dd {
         timeStamp{ 0ull },
         className{ "Unknown" },
         confScore{ 0.0f },
-        finished{ false }
+        nf::BaseDatum{}
     {}
     //destructor
     Datum::~Datum()
@@ -17,19 +17,18 @@ namespace dd {
         className{ other.className },
         confScore{ other.confScore },
         spawnTime{ other.spawnTime },
-        cvInputData{ other.cvInputData }
-    {
-        finished = other.finished.load();
-    }
+        cvInputData{ other.cvInputData },
+        nf::BaseDatum{ other }
+    {}
     //copy assignment
-    Datum& Datum::operator=(const Datum& other)
+    Datum& Datum::operator=(const Datum& other):
+        nf::BaseDatum{ other }
     {
         timeStamp = other.timeStamp;
         className = other.className;
         confScore = other.confScore;
         spawnTime = other.spawnTime;
         cvInputData = other.cvInputData;
-        finished = other.finished.load();
 
         return *this;
     }
@@ -39,18 +38,18 @@ namespace dd {
         className{ other.className },
         confScore{ other.confScore },
         spawnTime{ other.spawnTime },
-        cvInputData{ other.cvInputData }
-    {
-        finished = other.finished.load();
-    }
+        cvInputData{ other.cvInputData },
+        nf::BaseDatum{ std::move(other) }
+    {}
     //move assignment
-    Datum& Datum::operator=(Datum&& other) {
+    Datum& Datum::operator=(Datum&& other):
+        nf::BaseDatum{ std::move(other) }
+    {
         timeStamp = other.timeStamp;
         className = other.className;
         confScore = other.confScore;
         spawnTime = other.spawnTime;
         cvInputData = other.cvInputData;
-        finished = other.finished.load();
 
         return *this;
     }
@@ -62,7 +61,8 @@ namespace dd {
         other.confScore = confScore;
         other.spawnTime = spawnTime;
         other.cvInputData = cvInputData;
-        other.finished = finished.load();
+        other.Finished = this->Finished.load();
+        other.ForceForward = this->ForceForward.load();
 
         return other;
     }

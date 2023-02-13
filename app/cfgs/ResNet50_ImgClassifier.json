@@ -1,6 +1,7 @@
 {
-    "weights_path": "weights/ResNet50_ImgClassifier.onnx",
+    "weights_path": "ResNet50_ImgClassifier.onnx",
     "input_size": 224,
+    "batch_size": 1,
     "means": [
         0.44145816564559937,
         0.44145816564559937,

@@ -74,7 +74,7 @@ add_executable(DefectDetectionCppTest src/test.cpp)
 target_include_directories(DefectDetectionCppTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DefectDetectionCppTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS} $<TARGET_OBJECTS:DdBackend>)
 
-add_executable(ImageClassifierTest src/use_image_classifier.cpp)
+add_executable(ImageClassifierTest src/ImageClassifierTest.cpp)
 target_include_directories(ImageClassifierTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(ImageClassifierTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS} $<TARGET_OBJECTS:DdBackend>)
 

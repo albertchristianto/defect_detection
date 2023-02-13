@@ -11,7 +11,7 @@ namespace dd {
     template<typename SpTDatum>
     class ImageClassifier: public nf::I_InferEngine<SpTDatum> {
     public:
-        explicit ImageClassifier(std::string path_to_json, int batch_size, int gpu_id);
+        explicit ImageClassifier(std::string path_to_json, int gpu_id);
         ~ImageClassifier();
         bool Init();
         /**

@@ -90,8 +90,11 @@ namespace dd {
             tmp += _mFps[j]->Get();
         return tmp;
     }
-    BASE_QUEUE_SP InferenceManager::GetInputQueue() {
-        return m_Queues[m_ImgClassifier_QM->GetTagNumber()];
+    std::vector<BASE_QUEUE_SP> InferenceManager::GetInputQueues() {
+        return m_Queues;
+    }
+    int InferenceManager::GetQueueIdx() {
+        return int(m_ImgClassifier_QM->GetTagNumber());
     }
     bool InferenceManager::LoadEngineSettings() {
         NF_LOGGER_TRACE("{0}: Load the inference engine settings!", this->Name());

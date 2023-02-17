@@ -13,7 +13,6 @@
 #endif
 
 #define C_MAX_OBJECTS 100
-#define USE_LOGGER_API
 
 namespace dd {
     /**
@@ -52,6 +51,7 @@ namespace dd {
     ouput shows error, please check c# project for the meaning
     */
     extern "C" DD_INFERENCE_API int IsReady();
+    extern "C" DD_INFERENCE_API double CheckFPS(int what_to_check);
     /*!
     Open a pipeline for the callback system
     ouput shows error, please check c# project for the meaning
@@ -69,15 +69,13 @@ namespace dd {
     ouput shows error, please check c# project for the meaning
     @param[in]  api_id  which pipeline the function is applied on
     @param[in]  image   input image
-    @param[in]  filter  filter parameters
     */
     extern "C" DD_INFERENCE_API int SendImage(int api_id, C_Image& image);
-#ifdef USE_LOGGER_API
 //Logging API
     extern "C" DD_INFERENCE_API void Info(const char* str);
     extern "C" DD_INFERENCE_API void Error(const char* str);
     extern "C" DD_INFERENCE_API void Trace(const char* str);
-#endif
+
 }
 
 #endif

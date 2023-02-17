@@ -20,7 +20,8 @@ namespace dd {
         void Stop();
         bool IsReady();
         double GetFps();
-        BASE_QUEUE_SP GetInputQueue();
+        std::vector<BASE_QUEUE_SP> GetInputQueues();
+        int GetQueueIdx();
         std::string Name() { return "DD_Inference_Manager"; }
 
     private:

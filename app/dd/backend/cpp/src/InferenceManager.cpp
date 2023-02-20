@@ -74,7 +74,7 @@ namespace dd {
     }
 
     bool InferenceManager::IsReady() {
-        if (_mThreads.size() == 0)
+        if (m_Threads.size() == 0)
             return false;
 
         bool res = true;
@@ -87,7 +87,7 @@ namespace dd {
     double InferenceManager::GetFps() {//get the Fps value
         double tmp = 0;
         for (int j = 0; j < m_Fps.size(); ++j)
-            tmp += _mFps[j]->Get();
+            tmp += m_Fps[j]->Get();
         return tmp;
     }
     std::vector<BASE_QUEUE_SP> InferenceManager::GetInputQueues() {

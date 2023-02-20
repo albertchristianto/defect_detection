@@ -14,7 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace dd {
-    struct DD_BACKEND_API Datum: public nf::BaseDatum {
+    struct DD_BACKEND_API Datum: public nf::async::BaseDatum {
         //This is the general datum
         //////////////////////////////////////////
         /// PLEASE DON'T USE NAKED POINTERS    ///

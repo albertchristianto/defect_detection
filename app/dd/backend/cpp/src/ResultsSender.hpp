@@ -6,6 +6,7 @@
 
 #include "cWrapper.h"
 #include "ApiImgInfer.hpp"
+#include "Datum.hpp"
 
 namespace dd {
     class ResultsSender : public nf::async::WDataSender<C_Results, BASE_DATUM, BASE_DATUM_SP>

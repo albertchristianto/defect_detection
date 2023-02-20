@@ -1,12 +1,12 @@
 //our headers
-#include <nf/utilities/logger.hpp>
-#include <nf/async/worker/wDataSender.hpp>
-
-#include "cWrapper.h"
-#include "ApiImgInfer.hpp"
+#include "ResultsSender.hpp"
 
 namespace dd {
-    bool CollectResults(BASE_DATUM_SP& the_datum, C_Results& results) {
+    ResultsSender::ResultsSender(unsigned long long worker_id, int (*func_ptr)(C_Results&), std::shared_ptr<ImgInfer>& img_infer_api):
+        nf::async::WDataSender<C_Results, BASE_DATUM, BASE_DATUM_SP>{ worker_id, func_ptr },
+        m_ImgInfer{ img_infer_api }
+    {}
+    bool ResultsSender::CollectResults(BASE_DATUM_SP& the_datum, C_Results& results) {
         if (!m_ImgInfer->GetResults(the_datum))
             return false;
         results.TimeStamp = the_datum->timeStamp;

@@ -6,7 +6,7 @@ namespace dd {
         timeStamp{ 0ull },
         className{ "Unknown" },
         confScore{ 0.0f },
-        nf::BaseDatum{}
+        nf::async::BaseDatum{}
     {}
     //destructor
     Datum::~Datum()
@@ -18,17 +18,17 @@ namespace dd {
         confScore{ other.confScore },
         spawnTime{ other.spawnTime },
         cvInputData{ other.cvInputData },
-        nf::BaseDatum{ other }
+        nf::async::BaseDatum{ other }
     {}
     //copy assignment
-    Datum& Datum::operator=(const Datum& other):
-        nf::BaseDatum{ other }
-    {
+    Datum& Datum::operator=(const Datum& other) {
         timeStamp = other.timeStamp;
         className = other.className;
         confScore = other.confScore;
         spawnTime = other.spawnTime;
         cvInputData = other.cvInputData;
+        Finished = other.Finished.load();
+        ForceForward = other.ForceForward.load();
 
         return *this;
     }
@@ -39,17 +39,17 @@ namespace dd {
         confScore{ other.confScore },
         spawnTime{ other.spawnTime },
         cvInputData{ other.cvInputData },
-        nf::BaseDatum{ std::move(other) }
+        nf::async::BaseDatum{ std::move(other) }
     {}
     //move assignment
-    Datum& Datum::operator=(Datum&& other):
-        nf::BaseDatum{ std::move(other) }
-    {
+    Datum& Datum::operator=(Datum&& other) {
         timeStamp = other.timeStamp;
         className = other.className;
         confScore = other.confScore;
         spawnTime = other.spawnTime;
         cvInputData = other.cvInputData;
+        Finished = other.Finished.load();
+        ForceForward = other.ForceForward.load();
 
         return *this;
     }

@@ -4,7 +4,7 @@
 
 namespace dd {
     ImgInfer::ImgInfer(API_IMG_INFER_DATA_SP& the_param):
-        nf::ImgInfer<C_Image, BASE_DATUM_SP, BASE_QUEUE_SP>{ the_param.WorkerId, the_param.InputQueues, the_param.WaitQueue },
+        nf::ImgInfer<C_Image, BASE_DATUM_SP, BASE_QUEUE_SP>{ the_param->WorkerId, the_param->InputQueues, the_param->WaitQueue },
         m_Info{ the_param }
     {}
     bool ImgInfer::GetResults(BASE_DATUM_SP& results) {

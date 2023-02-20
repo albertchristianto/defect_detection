@@ -1,7 +1,10 @@
 #include "SystemManager.hpp"
 
+#include <nlohmann/json.hpp>
+
 #include <nf/utilities/logger.hpp>
 #include <nf/async/queue/standardQueue.hpp>
+#include <nf/async/sub_thread/standAlone.hpp>
 #include "InferenceManager.hpp"
 #include "ApiImgInfer.hpp"
 #include "ResultsSender.hpp"
@@ -53,7 +56,7 @@ namespace dd {
     // }
 
     void SystemManager::Stop() {
-        for (int i = 0; i < mImgInferDatas.size(); ++i)
+        for (int i = 0; i < m_ImgInferDatas.size(); ++i)
             DeleteApi(i);
         m_InferEngine->Stop();// stop the inference service
         NF_LOGGER_TRACE("{0}: Successfully executing stop function!", Name());
@@ -77,7 +80,7 @@ namespace dd {
         int id = -1;
         bool res = true;
         {//critical section of the system
-            const std::lock_guard<std::mutex> lock{ mMtx };
+            const std::lock_guard<std::mutex> lock{ m_Mtx };
             if (!m_AvailApiIds.empty())
             {//if we still have available id for the API
                 id = m_AvailApiIds.front();
@@ -93,10 +96,10 @@ namespace dd {
         try { //create the image inference information
             m_ImgInferDatas[id] = std::make_shared<API_IMG_INFER_DATA>();
             m_ImgInferDatas[id]->ApiId = id;
-            m_ImgInferDatas[id]->WorkerId = mWorker_id;
+            m_ImgInferDatas[id]->WorkerId = m_Worker_id;
             m_Worker_id++;
             m_ImgInferDatas[id]->InputQueues = m_InferEngine->GetInputQueues();
-            m_ImgInferDatas[id]->WaitQueue = std::make_shared<nf::async::StandardQueue>(100);
+            m_ImgInferDatas[id]->WaitQueue = std::make_shared<nf::async::StandardQueue<BASE_DATUM_SP>>(100);
 
             m_ImgInfers[id] = std::make_shared<ImgInfer>(m_ImgInferDatas[id]);
         }
@@ -115,7 +118,7 @@ namespace dd {
             m_ImgInferDatas[id]->SenderThread = std::make_shared<BASE_THREAD>(m_Thread_id);
             {//create the input reader
                 BASE_WORKER_SP send_worker = std::make_shared<ResultsSender>(m_ImgInferDatas[id]->WorkerId, send_results, m_ImgInfers[id]);
-                BASE_SUBTHREAD_SP send_subthread = std::make_shared<aio::async::StandAlone<BASE_DATUM_SP, BASE_WORKER_SP>>
+                BASE_SUBTHREAD_SP send_subthread = std::make_shared<nf::async::StandAlone<BASE_DATUM_SP, BASE_WORKER_SP>>
                     (m_SubThread_id, std::vector<BASE_WORKER_SP>{ send_worker });
                 m_ImgInferDatas[id]->SenderThread->Add(send_subthread);
                 m_ImgInferDatas[id]->SenderThread->Init();//<-- Init the video reader thread
@@ -136,12 +139,12 @@ namespace dd {
         if (m_ImgInferDatas[api_id] != nullptr) {
             NF_LOGGER_INFO("{0}: Deleting API id: {1}", Name(), api_id);
             m_ImgInfers[api_id]->Stop();
-            m_ImgInferDatas[id]->SenderThread.reset();//stop the Sender thread
+            m_ImgInferDatas[api_id]->SenderThread.reset();//stop the Sender thread
             m_ImgInfers[api_id].reset();
             m_ImgInferDatas[api_id].reset();
             size_t tmp;
             {//critical section of the system
-                const std::lock_guard<std::mutex> lock{ mMtx };
+                const std::lock_guard<std::mutex> lock{ m_Mtx };
                 m_AvailApiIds.push_back(api_id);
                 tmp = m_AvailApiIds.size();
             }
@@ -163,7 +166,7 @@ namespace dd {
         }
         return 1;
     }
-    bool InferenceManager::LoadSystemConfig() {
+    bool SystemManager::LoadSystemConfig() {
         NF_LOGGER_TRACE("{0}: Load the system settings!", this->Name());
         std::string path = "cfgs/AI_System.cfg";
         if (!boost::filesystem::exists(boost::filesystem::path(path))) {

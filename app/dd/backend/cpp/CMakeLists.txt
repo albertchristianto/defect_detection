@@ -85,4 +85,4 @@ target_link_libraries(OnnxTrtEngineGenerator PUBLIC nlohmann_json::nlohmann_json
 
 add_executable(DefectDetectionTest src/DdApiTest.cpp)
 target_include_directories(DefectDetectionTest PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(DefectDetectionTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS} $<TARGET_OBJECTS:DdBackendModule>)
+target_link_libraries(DefectDetectionTest PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS} $<TARGET_OBJECTS:DdBackendModule> $<TARGET_OBJECTS:DdInference>)

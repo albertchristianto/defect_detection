@@ -66,11 +66,12 @@ endif()
 find_package(OpenCV)
 
 add_compile_definitions(DD_BACKEND_EXPORTS)
+add_compile_definitions(DD_INFERENCE_EXPORTS)
+
 add_library(DdBackendModule SHARED src/Datum.cpp src/ImgClassifier.cpp src/TrtUtils.cpp)
 target_include_directories(DdBackendModule PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DdBackendModule PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
 
-add_compile_definitions(DD_INFERENCE_EXPORTS)
 add_library(DdInference SHARED src/ApiImgInfer.cpp src/ResultsSender.cpp src/InferenceManager.cpp src/SystemManager.cpp src/cWrapper.cpp)
 target_include_directories(DdInference PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(DdInference PUBLIC nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS} $<TARGET_OBJECTS:DdBackendModule>)

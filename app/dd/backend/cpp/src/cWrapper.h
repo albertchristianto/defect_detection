@@ -9,7 +9,7 @@
         #define DD_INFERENCE_API __declspec(dllimport)
     #endif
 #elif __linux__ 
-    #define DD_BACKEND_API
+    #define DD_INFERENCE_API
 #endif
 
 #define C_MAX_OBJECTS 100

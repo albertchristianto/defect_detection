@@ -122,11 +122,12 @@ namespace dd {
                 if (cpu_output[max_idx] < cpu_output[c])
                     max_idx = c;
             }
-            for (int c = 0; c < m_OutputDim.d[1]; c++) {
-                //int idx_now = b * m_BatchSize;
-                NF_LOGGER_TRACE("{0}: {1}", this->Name(), cpu_output[c]);
-            }
+            // for (int c = 0; c < m_OutputDim.d[1]; c++) {
+            //     //int idx_now = b * m_BatchSize;
+            //     NF_LOGGER_TRACE("{0}: {1}", this->Name(), cpu_output[c]);
+            // }
             the_datas[b]->className = m_ClassesName[max_idx];
+            the_datas[b]->Finished = true;
             // NF_LOGGER_TRACE("{0}: {1}x{2}x{3}x{4}", this->Name(), m_OutputDim.d[0], m_OutputDim.d[1], m_OutputDim.d[2], m_OutputDim.d[3]);
         }
     }

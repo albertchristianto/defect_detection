@@ -1,5 +1,6 @@
 //our headers
 #include "ResultsSender.hpp"
+#include <nf/utilities/logger.hpp>
 
 namespace dd {
     ResultsSender::ResultsSender(unsigned long long worker_id, int (*func_ptr)(C_Results&), std::shared_ptr<ImgInfer>& img_infer_api):

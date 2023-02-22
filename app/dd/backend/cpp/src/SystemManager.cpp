@@ -58,12 +58,15 @@ namespace dd {
     void SystemManager::Stop() {
         for (int i = 0; i < m_ImgInferDatas.size(); ++i)
             DeleteApi(i);
-        m_InferEngine->Stop();// stop the inference service
+        if (m_InferEngine != nullptr)
+            m_InferEngine->Stop();// stop the inference service
         NF_LOGGER_TRACE("{0}: Successfully executing stop function!", Name());
     }
 
     bool SystemManager::IsReady() {
-        return m_InferEngine->IsReady();
+        if (m_InferEngine != nullptr)
+            return m_InferEngine->IsReady();
+        return false;
     }
 
     double SystemManager::CheckFPS(int what_to_check) {

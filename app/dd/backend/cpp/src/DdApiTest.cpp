@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     argparse::ArgumentParser program(program_name);
 
     program.add_argument("--image_path")
-        .default_value(std::string{"sample01.jpg"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
+        .default_value(std::string{"samples/sample01.jpg"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
         .help("specify the image file path.");
 
     try {

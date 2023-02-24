@@ -19,10 +19,10 @@ int main(int argc, char *argv[]) {
     argparse::ArgumentParser program(program_name);
 
     program.add_argument("--config_path")
-        .default_value(std::string{"ResNet50_ImgClassifier.json"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
+        .default_value(std::string{"cfgs/ResNet50_ImgClassifier.json"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
         .help("specify the config file path.");
     program.add_argument("--image_path")
-        .default_value(std::string{"sample01.jpg"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
+        .default_value(std::string{"samples/sample01.jpg"})   // might otherwise be type const char* leading to an error when trying program.get<std::string>
         .help("specify the image file path.");
 
     try {
@@ -35,7 +35,15 @@ int main(int argc, char *argv[]) {
 
     std::string the_config_path = program.get<std::string>("--config_path");
     std::string the_image_path = program.get<std::string>("--image_path");
-    std::shared_ptr<nf::I_InferEngine<BASE_DATUM_SP>> the_engine = std::make_shared<dd::ImageClassifier<BASE_DATUM_SP>>(the_config_path, 0);
+    std::shared_ptr<nf::I_InferEngine<BASE_DATUM_SP>> the_engine;
+    try {
+        the_engine = std::make_shared<dd::ImageClassifier<BASE_DATUM_SP>>(the_config_path, 0);
+    }
+    catch (const std::runtime_error& err) {
+        NF_LOGGER_ERROR("{0}: Failed to create the engine!!", program_name);
+        return -1;
+    }
+
     if (!the_engine->Init()) {
         NF_LOGGER_ERROR("{0}: Failed to init the engine!!", program_name);
         return -1;

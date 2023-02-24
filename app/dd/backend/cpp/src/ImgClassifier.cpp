@@ -12,7 +12,8 @@ namespace dd {
     ImageClassifier<SpTDatum>::ImageClassifier(std::string path_to_json, int gpu_id):
         m_Engine{ nullptr }, m_InputBufferCpu{ nullptr }, m_Context{ nullptr }
     {
-        LoadConfig(path_to_json);
+        if (!LoadConfig(path_to_json))
+            throw std::runtime_error(std::string(this->Name() + ": Oh no!!"));//throw an error
         m_GpuId = gpu_id;
         if (m_GpuId < 0)
             throw std::runtime_error(std::string(this->Name() + ": This system is using TensorRT backend!! Must use GPU to start the inference engine!!"));//throw an error
@@ -136,9 +137,11 @@ namespace dd {
         return "TRT_Image_Classifier";
     }
     template<typename SpTDatum>
-    void ImageClassifier<SpTDatum>::LoadConfig(const std::string& path) {
-        if (!boost::filesystem::exists(boost::filesystem::path(path)))
-            throw std::runtime_error(std::string(this->Name() + ": Could not find the json config file!!!"));//throw an error
+    bool ImageClassifier<SpTDatum>::LoadConfig(const std::string& path) {
+        if (!boost::filesystem::exists(boost::filesystem::path(path))){
+            NF_LOGGER_ERROR("{0}: Could not find the json config file!!!", this->Name());
+            return false;
+        }
         std::ifstream file(path);
         nlohmann::json data = nlohmann::json::parse(file);
         m_WeightsPath = data["weights_path"].get<std::string>();
@@ -150,6 +153,7 @@ namespace dd {
         m_Stds = data["stds"].get<std::vector<float>>();
         //NF_LOGGER_TRACE("{0}: {1}x{2}x{3}", this->Name(), m_Stds[0], m_Stds[1], m_Stds[2]);
         m_ClassesName = data["class_name"].get<std::vector<std::string>>();
+        return true;
     }
     COMPILE_TEMPLATE_DATUM(ImageClassifier);
     DEFINE_TEMPLATE_DATUM(ImageClassifier);

@@ -16,12 +16,12 @@ class C_Results(Structure):
 SEND_RESULTS = CFUNCTYPE(c_int, C_Results)
 
 def GetTheAPI():
-    abs_path_dll = os.path.join(os.path.abspath(os.getcwd()), "build")
+    abs_path_dll = os.path.join(os.path.abspath(os.getcwd()), "lib")
     os.environ['PATH'] = abs_path_dll + os.pathsep + os.environ['PATH']
     if os.name == "nt":
-        lib = CDLL("./build/DdInference.dll", winmode=0)
+        lib = CDLL(os.path.join(abs_path_dll, "DdInference.dll"))
     else:
-        lib = CDLL("./build//DdInference.so", winmode=0)
+        lib = CDLL(os.path.join(abs_path_dll, "DdInference.so"))
 
     #load all the functions
     lib.Initialize.argtypes = []
@@ -47,8 +47,9 @@ def GetTheAPI():
     lib.Trace.argtypes = [POINTER(c_char)]
     lib.Trace.restype = None
     return lib
+
 if __name__ == "__main__":
     LIB = GetTheAPI()
     LIB.Initialize()
     LIB.Trace(b"Test")
-    LIB.Restart()
+    LIB.Terminate()

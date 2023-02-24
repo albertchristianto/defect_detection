@@ -23,7 +23,7 @@ namespace dd {
         std::string Name();
         void WarmUp(int n_times);
     private:
-        void LoadConfig(const std::string& path);
+        bool LoadConfig(const std::string& path);
         //TensorRT engine is loaded using these variable++++
         TrtLogger m_Logger;
         TrtUniquePtr<nvinfer1::ICudaEngine> m_Engine;

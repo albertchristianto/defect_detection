@@ -7,18 +7,25 @@ import json
 
 from .template import Ui_MainWindow
 from ..backend.py.ImgClassifier import ImgClassifier
+from ..backend.cpp.DdInference import GetTheAPI
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.setFixedSize(640, 640)
-        f = open('cfgs/app.cfg')
+        f = open('cfgs/AI_System.cfg')
         self.SystemParam = json.load(f)
         self.image = None
         self.DlEngine = None
         if self.SystemParam['mode'] == "ImgClassifier":
-            self.DlEngine = ImgClassifier(self.SystemParam['image_classifier_path'])
+            if self.SystemParam['backend'] == 'py':
+                self.DlEngine = ImgClassifier(self.SystemParam['img_classifier_cfg_path'])
+            elif self.SystemParam['backend'] == 'py':
+                self.DlEngine = GetTheAPI()
+                self.DlEngine.Initialize()
+                LIB.Trace(b"Test")
+                LIB.Terminate()
         self.InputImage.clicked.connect(self.open_file_dialog)
         self.DetectButton.clicked.connect(self.detect)
 

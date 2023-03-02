@@ -52,21 +52,26 @@ def GetTheAPI():
     lib.Trace.restype = None
     return lib
 
-finished = False
-
-class CallbackWrapper:
+class DdInferenceWrapper:
     def __init__(self):
+        self.lib = GetTheAPI()
+        self.lib.Initialize()
+        self.input_image = C_Image()
+        self.time_stamp = 0
         # Define the C-compatible callback function
         self._c_callback = SEND_RESULTS(self.py_accept_results)
+        self.api_id = self.lib.AddApiFuncPtr(self._c_callback)
+        self.finished = True
+        self.output = ""
+
+    def __del__(self):
+        self.lib.Terminate()
 
     def py_accept_results(self, results):
         # Convert the results pointer to a Python object
         # py_results = C_Results.from_address(ctypes.addressof(results.contents))
-
-        # Print the results
-        print(f"Results: {results.TimeStamp}, {results.ClassName}")
-        global finished
-        finished = True
+        self.output = results.ClassName.decode("utf-8") 
+        self.finished = True
         # Return 0 to indicate success
         return 0
 
@@ -74,19 +79,23 @@ class CallbackWrapper:
         # Return the C-compatible callback function
         return self._c_callback
 
+    def forward(self, img):
+        if not self.finished:
+            return ""
+        self.finished = False
+        self.input_image.TimeStamp = self.time_stamp
+        self.input_image.Ptr = img.ctypes.data_as(POINTER(c_ubyte))
+        self.input_image.Height, self.input_image.Width, self.input_image.Depth = img.shape
+        if (self.lib.SendImage(self.api_id, self.input_image) != 1):
+            return ""
+        while(not self.finished):
+            time.sleep(0.1)
+        self.time_stamp += 1
+        tmp = self.output
+        self.output = ""
+        return tmp
+
 if __name__ == "__main__":
-    LIB = GetTheAPI()
-    LIB.Initialize()
-    wrapper = CallbackWrapper()
-    f_ptr = wrapper.get_callback()
-    api_id = LIB.AddApiFuncPtr(f_ptr)
+    wrapper = DdInferenceWrapper()
     img = cv2.imread('samples/mt_defect.jpg')
-    the_image = C_Image()
-    the_image.TimeStamp = 0
-    the_image.Ptr = img.ctypes.data_as(POINTER(c_ubyte))
-    the_image.Height, the_image.Width, the_image.Depth = img.shape
-    if (LIB.SendImage(api_id, the_image) != 1):
-        LIB.Terminate()
-    while(not finished):
-        time.sleep(0.1)
-    LIB.Terminate()
+    print(wrapper.forward(img))

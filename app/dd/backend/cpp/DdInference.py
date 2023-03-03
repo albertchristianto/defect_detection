@@ -4,7 +4,8 @@ import os
 import cv2
 import numpy as np
 import time
-import ctypes
+from loguru import logger
+import sys
 
 class C_Image(Structure):
     _fields_ = [("TimeStamp", c_ulonglong),
@@ -19,14 +20,28 @@ class C_Results(Structure):
 
 SEND_RESULTS = CFUNCTYPE(c_int, C_Results)
 
-def GetTheAPI():
-    abs_path_dll = os.path.join(os.path.dirname(__file__), "lib")
-    os.environ['PATH'] = abs_path_dll + os.pathsep + os.environ['PATH']
-    if os.name == "nt":
-        lib = CDLL(os.path.join(abs_path_dll, "DdInference.dll"), winmode=0)
-    else:
-        lib = CDLL(os.path.join(abs_path_dll, "DdInference.so"))
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(__file__)
+ 
+    return os.path.join(base_path, relative_path)
 
+def GetTheAPI():
+    logger.trace("Load the API!")
+    abs_path_dll = resource_path("lib")
+    os.environ['PATH'] = abs_path_dll + os.pathsep + os.environ['PATH']
+    lib_path = ""
+    if os.name == "nt":
+        lib_path = os.path.join(abs_path_dll, "DdInference.dll")
+    else:
+        lib_path = os.path.join(abs_path_dll, "DdInference.so")
+    lib = CDLL(lib_path, winmode=0)
+    if not os.path.exists(lib_path):
+        return None
     #load all the functions
     lib.Initialize.argtypes = []
     lib.Initialize.restype = c_int
@@ -55,17 +70,20 @@ def GetTheAPI():
 class DdInferenceWrapper:
     def __init__(self):
         self.lib = GetTheAPI()
-        self.lib.Initialize()
+        if self.lib is not None:
+            self.lib.Initialize()
         self.input_image = C_Image()
         self.time_stamp = 0
         # Define the C-compatible callback function
         self._c_callback = SEND_RESULTS(self.py_accept_results)
-        self.api_id = self.lib.AddApiFuncPtr(self._c_callback)
+        if self.lib is not None:
+            self.api_id = self.lib.AddApiFuncPtr(self._c_callback)
         self.finished = True
         self.output = ""
 
     def __del__(self):
-        self.lib.Terminate()
+        if self.lib is not None:
+            self.lib.Terminate()
 
     def py_accept_results(self, results):
         # Convert the results pointer to a Python object
@@ -80,6 +98,9 @@ class DdInferenceWrapper:
         return self._c_callback
 
     def forward(self, img):
+        if self.lib is None:
+            logger.warning('Failed to load the API!')
+            return ""
         if not self.finished:
             return ""
         self.finished = False
@@ -94,8 +115,13 @@ class DdInferenceWrapper:
         tmp = self.output
         self.output = ""
         return tmp
+    
+    def print_info(self, the_str):
+        if self.lib is not None:
+            self.lib.Info(str.encode(the_str))
 
 if __name__ == "__main__":
     wrapper = DdInferenceWrapper()
     img = cv2.imread('samples/mt_defect.jpg')
-    print(wrapper.forward(img))
+    img = np.array(img)
+    wrapper.print_info(f'the image is {wrapper.forward(img)}')

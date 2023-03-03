@@ -2,12 +2,11 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
 from loguru import logger
 import cv2
-import numpy as np
 import json
 
-from .template import Ui_MainWindow
-from ..backend.py.ImgClassifier import ImgClassifier
-from ..backend.cpp.DdInference import DdInferenceWrapper
+from dd.ui.template import Ui_MainWindow
+from dd.backend.py.ImgClassifier import ImgClassifier
+from dd.backend.cpp.DdInference import DdInferenceWrapper
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):

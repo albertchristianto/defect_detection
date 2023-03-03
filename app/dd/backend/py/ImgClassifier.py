@@ -3,7 +3,7 @@ import json
 import onnxruntime
 import numpy as np
 
-from .dnn import dnn
+from dd.backend.py.dnn import dnn
 
 class ImgClassifier(dnn):
     def __init__(self, cfg_json_path, weight_path=None):

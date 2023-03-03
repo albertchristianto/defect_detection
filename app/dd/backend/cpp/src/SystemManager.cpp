@@ -17,6 +17,9 @@ namespace dd {
         if (!(NF_LOGGER_INITIALIZE()))
             NF_LOGGER_INIT(SHOW_IN_CMD_PROMPT, LOG_LEVEL);// Initialize the logger system. IT IS A MUST TO ADD THIS LINE OF CODE!!!!
         NF_LOGGER_INFO("The defect detection system is started!");
+        m_Worker_id = 20230620;//counter for the worker object
+        m_SubThread_id = 20230620;//counter for the subthread object
+        m_Thread_id = 20230620;//counter for the thread object
     }
 
     SystemManager::~SystemManager() {

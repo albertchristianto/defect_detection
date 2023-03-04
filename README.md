@@ -44,7 +44,7 @@ Below is the performance comparison table for the [NHA12D Dataset](https://githu
 EfficientNet-B0 achieves the best performance with 92.01% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository in the learning rate part. I will check with the training code of the image classification and update the results.
 
 ## Continous Integration and Continous Delivery
-Incoming description from me. I am still building a C++ library to help me build an inference backend system. I am using [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) as the reference for this C++ library.
+The development and deployment of the deep learning research are very hard and at a high cost however we can make it more easier and at lower cost By preparing the pipeline for doing research and deploying the research product. [PyTorch](https://pytorch.org/)-[Onnxruntime](https://onnxruntime.ai/)-[TensorRT](https://developer.nvidia.com/tensorrt) is the best strategy to build the CI/CD pipeline as far as I have worked on deep learning-computer vision field. More descriptions will come from me.
 
 ## Reference
 1. J. Wei, P. Zhu, X. Qian and S. Zhu, "One-stage object detection networks for inspecting the surface defects of magnetic tiles," 2019 IEEE International Conference on Imaging Systems and Techniques (IST), 2019, pp. 1-6, doi: 10.1109/IST48021.2019.9010098.

@@ -14,7 +14,7 @@ parser.add_argument('--weight_path', default='checkpoint/20220808-1234/epoch_90.
 parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used: VGG16,')
 parser.add_argument('--class_name_path', default='checkpoint/20220808-1234/classes_name.txt', type=str, metavar='DIR',
                                         help='path to weight of the model')
-parser.add_argument('--input_size', default=160, type=int, metavar='N',
+parser.add_argument('--input_size', default=224, type=int, metavar='N',
                                         help='number of epochs to save the model')
 parser.add_argument('--output_weight_path', default='img_classifier.onnx', type=str, metavar='DIR',
                                         help='path to weight of the model')   

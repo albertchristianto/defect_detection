@@ -11,37 +11,7 @@ I use the public defect detection dataset to build and test the performance of t
 2. [NHA12D](https://github.com/ZheningHuang/NHA12D-Crack-Detection-Dataset-and-Comparison-Study)
 3. Incoming
 ### Image Classification
-The most obvious method for defect detection is image classification. In the deep learning method, there is a lot of neural network architecture, such as VGG, ResNet, EfficientNet, etc. These neural network architectures usually are used for other deep learning methods as their backbone architecture. By using image classification, we can analyze the performance of the backbone architecture and check the deployability of the architecture. You can find the image classifier implementation [here](https://github.com/albertchristianto/defect_detection/tree/main/ImgClassifier).
-
-#### Experiment for Magnetic Tile Surface Dataset
-Due to the lack of images, the problem definition for magnetic tile surface defect detection is the defect detector will classify a magnetic tile surface by sliding across the image with the size of the defect detector's input. This scheme also helps increase the detection accuracy with a smaller model. This defect detection scheme is a patch defect detector. The patch defect detector's input size depends on the minimum side of the input image. Check the demonstration of this scheme [here](https://docs.google.com/presentation/d/1pR1xuDoaAntRRu5F9N6TAmnNQoNNMkn3hGWH6LbT5PU/edit#slide=id.g16623a9b199_0_183).
-
-
-Below is the performance comparison table for the [Magnetic Tile Surface Dataset](https://github.com/abin24/Magnetic-tile-defect-datasets.).
-
-| Backbone Name                              | Number of  Training Parameters | Accuracy(%) |
-| :----------------------------------------- |:------------------------------:| -----------:|
-| ResNet34 - Scratch                         |                           21 M |       97.16 |
-| ResNet34 - ImageNet Pre-trained            |                           21 M |       97.39 |
-| ResNet50 - Scratch                         |                           23 M |       95.14 |
-| ResNet50 - ImageNet Pre-trained            |                           23 M |       98.20 |
-| EfficientNet-B0 - Scratch                  |                            4 M |       95.43 |
-| __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __98.34__ |
-
-The performance table above shows that image classification tackles defect detection for the magnetic tile surface. The best backbone architecture for detecting the defect is EfficientNet-B0 achieving 98.34% accuracy, despite having fewer training parameters. Using ImageNet pre-trained weights fastens training times and achieves high accuracy. All the models trained from scratch have lower accuracy. The reason behind this phenomenon is transfer learning. This [article](https://machinelearningmastery.com/how-to-improve-performance-with-transfer-learning-for-deep-learning-neural-networks/) explains it clearly.
-
-#### Experiment for NHA12D Dataset
-Road/pavement crack detection uses the same defect detection scheme, patch defect detector. However, the size of the patch is a fixed value(224x224). 
-
-Below is the performance comparison table for the [NHA12D Dataset](https://github.com/ZheningHuang/NHA12D-Crack-Detection-Dataset-and-Comparison-Study).
-
-| Backbone Name                              | Number of  Training Parameters | Accuracy(%) |
-| :----------------------------------------- |:------------------------------:| -----------:|
-|   ResNet34 - ImageNet Pre-trained          |                         21 M   |     90.62   |
-| ResNet50 - ImageNet Pre-trained            |                           23 M |       91.37 |
-| __EfficientNet-B0 - ImageNet Pre-trained__ |                        __4 M__ |   __92.01__ |
-
-EfficientNet-B0 achieves the best performance with 92.01% accuracy. However, while monitoring the training process, I notice all the models haven't converged yet. This phenomenon is an implementation problem from the image classification repository in the learning rate part. I will check with the training code of the image classification and update the results.
+The most obvious method for defect detection is image classification. In the deep learning method, there is a lot of neural network architecture, such as VGG, ResNet, EfficientNet, etc. These neural network architectures usually are used for other deep learning methods as their backbone architecture. By using image classification, we can analyze the performance of the backbone architecture and check the deployability of the architecture. You can find the image classifier implementation [here](https://github.com/albertchristianto/defect_detection/tree/main/ImgClassifier). Check the experiment report [here](https://github.com/albertchristianto/defect_detection/tree/main/ImgClassifier).
 
 ## Continous Integration and Continous Delivery
 The development and deployment of the deep learning research are very hard and at a high cost however we can make it more easier and at lower cost By preparing the pipeline for doing research and deploying the research product. [PyTorch](https://pytorch.org/)-[Onnxruntime](https://onnxruntime.ai/)-[TensorRT](https://developer.nvidia.com/tensorrt) is the best strategy to build the CI/CD pipeline as far as I have worked on deep learning-computer vision field. The research part for this repository will use [PyTorch](https://pytorch.org/) as the deep learning framework. Then, I convert the weights of the deep learning network into [Onnxruntime](https://onnxruntime.ai/)'s weights format. Using [TensorRT](https://developer.nvidia.com/tensorrt)'s onnxparser convert the [Onnxruntime](https://onnxruntime.ai/)'s weights format into [TensorRT](https://developer.nvidia.com/tensorrt)'s weights format. With [TensorRT](https://developer.nvidia.com/tensorrt) optimization, the inference performance will be greatly increased.

@@ -103,13 +103,6 @@ class ImageClassificationDataset(Dataset):
         self.transformation = transform
         self.input_size = self.transformation['input_size']
         self.define_means_stds()
-        self.torch_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(self.transformation['random_horizontal_flips']),
-            transforms.RandomRotation(self.transformation['random_rotation']),
-            transforms.Resize((self.input_size, self.input_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean = self.means, std = self.stds)
-        ])
 
     def define_means_stds(self):
         if self.transformation['use_vgg']:
@@ -121,22 +114,21 @@ class ImageClassificationDataset(Dataset):
 
     def __getitem__(self, index):
         imgPath = self.data[index][0]
-        label = int(self.data[index][1])
+        labelPath = imgPath.split('.')[0] + '.png'
         try:
-            if (self.train_mode):
-                img = Image.open(imgPath)
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
-                img = self.torch_transform(img)
-            else:
-                img = cv2.imread(imgPath)
-                img = cv2.resize(img, (self.input_size, self.input_size), interpolation=cv2.INTER_CUBIC)
-                img = vgg_preprocess(img, self.means, self.stds)
-                img = torch.from_numpy(img)
+            segLabel = cv2.imread(labelPath)
+            segLabel = cv2.cvtColor(segLabel, cv2.COLOR_BGR2GRAY)
+            segLabel = (segLabel > 128).astype(np.int64)
+            segLabel = cv2.resize(segLabel, (self.input_size, self.input_size), interpolation=cv2.INTER_NEAREST)
+            segLabel = torch.from_numpy(segLabel).long()
+            img = cv2.imread(imgPath)
+            img = cv2.resize(img, (self.input_size, self.input_size), interpolation=cv2.INTER_CUBIC)
+            img = vgg_preprocess(img, self.means, self.stds)
+            img = torch.from_numpy(img)
         except Exception as e:
             logger.error(f'{imgPath}: {e}')
 
-        return img, label
+        return img, segLabel
 
     def __len__(self):
         return self.numSample
@@ -158,7 +150,7 @@ if __name__ == '__main__':
     transform['input_size'] = 224
     transform['means'] = None
     transform['stds'] = None
-    dataset_root = "E:/Albert_Christianto/Project/defect_detection/dataset/magnetic_tile"
+    dataset_root = "E:/Albert_Christianto/Project/defect_detection/dev/dataset/magnetic_tile"
     class_name_path = os.path.join(dataset_root, 'classes_name.txt')
     transform['class_name'] = get_class_name(class_name_path)
     logger.trace('Get the dataloader')

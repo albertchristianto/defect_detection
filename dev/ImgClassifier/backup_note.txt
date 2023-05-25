@@ -1,0 +1,1 @@
+python main.py --mode train --epochs 200 --lr 0.1 --model_type "EfficientNetB0" --dataset_root "E:/Albert_Christianto/Project/defect_detection/dataset/private_pcb" --use_pretrained

@@ -1,5 +1,8 @@
 # ImageClassifier
-This repository is a re-implementation of the image classification problems using deep learning. You can train an image classifier model using your custom dataset with it. Here are some steps for you:
+This repository is a re-implementation of the image classification problems using deep learning. We can also use it to check the performance of the feature extractor network or the backbone.
+
+## Getting Started
+You can train an image classifier model with your custom dataset using this repository. Here are some steps for you:
 1. Prepare and organize your dataset similar to this structure below.
 ```
 __YOUR_DATASET__
@@ -21,6 +24,7 @@ __YOUR_DATASET__
 │       ├── img_subfolder_b_class_b_001.jpg
 │       ├── ...
 │       └── img_subfolder_b_class_b_100.jpg
+├── ...
 └── tools
     ├── compute_mean_stds.py
     └── CreateSplitTxt.py

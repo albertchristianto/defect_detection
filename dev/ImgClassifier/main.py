@@ -142,10 +142,18 @@ def post_training_process(args, best_acc_epoch_val, best_epoch, class_name, mean
 
     the_text_path = os.path.join(args.checkpoint_dir, f'{args.model_type}_ImgClassifier.json')
     dictionary = {}
-    dictionary['input_size'] = args.input_size
-    dictionary['means'] = list(means)
-    dictionary['stds'] = list(stds)
+    dictionary['input_size'] = str(args.input_size)
+    dictionary['means'] = []
+    for each in means:
+        dictionary['means'].append(str(each))
+    dictionary['stds'] = []
+    for each in stds:
+        dictionary['stds'].append(str(each))
     dictionary['class_name'] = class_name
+    json_object = json.dumps(dictionary, indent=4)
+    with open(the_text_path, "w") as outfile:
+        outfile.write(json_object)
+
     json_object = json.dumps(dictionary, indent=4)
     with open(the_text_path, "w") as outfile:
         outfile.write(json_object)

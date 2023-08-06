@@ -15,14 +15,14 @@ if __name__ == '__main__':
     cnn_model.eval()
     img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC)
     means =  np.array([ 0.44145817, 0.44145817, 0.44145817 ])
-    stds = np.array([ 0.17827073, 0.17827073, 0.17827073])
+    stds = np.array([ 0.17827073, 0.17827073, 0.17827073 ])
     img = vgg_preprocess(img, means, stds)
     img = np.expand_dims(img, axis=0)
     img = torch.from_numpy(img)
 
     output = cnn_model(img)['out'] 
     seg = torch.argmax(output, 1).cpu().detach().numpy()  # Get  prediction classes
-    plt.imshow(disp[:,:,::-1])  # Show image
-    plt.show()
-    plt.imshow(seg[0])  # display image
-    plt.show()
+    res = seg[0] * 255.0
+    cv2.imshow('input', disp)
+    cv2.imshow('output', res)
+    cv2.waitKey(0)

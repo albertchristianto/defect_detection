@@ -1,2 +1,0 @@
-
-python main.py --mode train --dataset_root E:\Albert_Christianto\Project\defect_detection\dev\dataset\magnetic_tile --checkpoint_dir E:\Albert_Christianto\Project\defect_detection\dev\ImgClassifierSelfAttention\checkpoint\20230526_1004 --resume

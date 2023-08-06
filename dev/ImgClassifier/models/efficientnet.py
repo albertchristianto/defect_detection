@@ -4,7 +4,14 @@ import torch.utils.model_zoo as model_zoo
 from math import ceil
 
 pre_trained_weights_url = {
-    "b0":'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b0_ra-3dd342df.pth'
+    "b0":'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b0_ra-3dd342df.pth',
+    "b1": 'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b1-533bc792.pth',
+    "b2": 'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b2_ra-bcdf34b7.pth',
+    "b3": 'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b3_ra2-cf984f9c.pth',
+    "b4": 'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b4_ra2_320-7eb33cd5.pth',
+    "b5": 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth',
+    "b6": 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth',
+    "b7": 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth'
 }
 
 base_model = [
@@ -20,15 +27,15 @@ base_model = [
 
 #read this https://keras.io/examples/vision/image_classification_efficientnet_fine_tuning/ 
 pre_defined_values = {
-    #tuple of: (phi_value, resolution, drop_rate)
-    "b0":(0, 224, 0.2),
-    "b1": (0.5, 240, 0.2),
-    "b2": (1, 260, 0.3),
-    "b3": (2, 300, 0.3),
-    "b4": (3.5, 380, 0.4),
-    "b5": (5, 456, 0.4),
-    "b6": (6, 528, 0.5),
-    "b7": (7, 600, 0.5)
+    #tuple of: (width, depth, resolution, drop_rate)
+    "b0": (1.0, 1.0, 224, 0.2),
+    "b1": (1.0, 1.1, 240, 0.2),
+    "b2": (1.1, 1.2, 260, 0.3),
+    "b3": (1.2, 1.4, 300, 0.3),
+    "b4": (1.4, 1.8, 380, 0.4),
+    "b5": (1.6, 2.2, 456, 0.4),
+    "b6": (1.8, 2.6, 528, 0.5),
+    "b7": (2.0, 3.1, 600, 0.5)
 }
 
 class CNNBlock(nn.Module):
@@ -142,6 +149,40 @@ class InvertedResidualBlock(nn.Module):
         else:
             return self.conv(x)
 
+class CondConvResidual(InvertedResidualBlock):
+    """ Inverted residual block w/ CondConv routing"""
+
+    def __init__(
+            self, in_chs, out_chs, dw_kernel_size=3, stride=1, dilation=1, group_size=1, pad_type='',
+            noskip=False, exp_ratio=1.0, exp_kernel_size=1, pw_kernel_size=1, act_layer=nn.ReLU,
+            norm_layer=nn.BatchNorm2d, se_layer=None, num_experts=0, drop_path_rate=0.):
+
+        self.num_experts = num_experts
+        conv_kwargs = dict(num_experts=self.num_experts)
+
+        super(CondConvResidual, self).__init__(
+            in_chs, out_chs, dw_kernel_size=dw_kernel_size, stride=stride, dilation=dilation, group_size=group_size,
+            pad_type=pad_type, act_layer=act_layer, noskip=noskip, exp_ratio=exp_ratio, exp_kernel_size=exp_kernel_size,
+            pw_kernel_size=pw_kernel_size, se_layer=se_layer, norm_layer=norm_layer, conv_kwargs=conv_kwargs,
+            drop_path_rate=drop_path_rate)
+
+        self.routing_fn = nn.Linear(in_chs, self.num_experts)
+
+    def forward(self, x):
+        shortcut = x
+        pooled_inputs = F.adaptive_avg_pool2d(x, 1).flatten(1)  # CondConv routing
+        routing_weights = torch.sigmoid(self.routing_fn(pooled_inputs))
+        x = self.conv_pw(x, routing_weights)
+        x = self.bn1(x)
+        x = self.conv_dw(x, routing_weights)
+        x = self.bn2(x)
+        x = self.se(x)
+        x = self.conv_pwl(x, routing_weights)
+        x = self.bn3(x)
+        if self.has_skip:
+            x = self.drop_path(x) + shortcut
+        return x
+
 class EfficientNet(nn.Module):
     def __init__(self, version, num_classes):
         super(EfficientNet, self).__init__()
@@ -155,10 +196,8 @@ class EfficientNet(nn.Module):
         )
         self._initialize_weights_norm()
 
-    def calculate_factors(self, version, alpha=1.2, beta=1.1):
-        phi, _, dropout_rate = pre_defined_values[version]
-        depth_factor = alpha ** phi
-        width_factor = beta ** phi
+    def calculate_factors(self, version):
+        depth_factor, width_factor, _, dropout_rate = pre_defined_values[version]
         return depth_factor, width_factor, dropout_rate
 
     def create_features(self, width_factor, depth_factor, last_channels):
@@ -209,15 +248,16 @@ class EfficientNet(nn.Module):
 
 def test():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    version = "b0"
-    _, res, _ = pre_defined_values[version]
-    num_examples, num_classes = 4, 10
-    x = torch.randn((num_examples, 3, res, res)).to(device)
-    model = EfficientNet(
-        version=version,
-        num_classes=num_classes,
-    ).to(device)
-    print(model(x).shape) # (num_examples, num_classes)
+
+    for version in pre_trained_weights_url:
+        _, _, res, _ = pre_defined_values[version]
+        num_examples, num_classes = 4, 10
+        x = torch.randn((num_examples, 3, res, res)).to(device)
+        model = EfficientNet(
+            version=version,
+            num_classes=num_classes,
+        ).to(device)
+        print(model(x).shape) # (num_examples, num_classes)
 
 #API function for building our LPR model
 def Get_EfficientNetB0(num_output, pretrainedPath):
@@ -229,6 +269,44 @@ def Get_EfficientNetB0(num_output, pretrainedPath):
         state = model.state_dict()
         state_keys = list(state.keys())
         for i, the_keys in enumerate(b0_state_dict.keys()):
+            print(the_keys,state_keys[i])
+            if state_keys[i].find('features') == -1:
+                continue #ignore the classifier part
+            weights_load[state_keys[i]] = b0_state_dict[the_keys]
+        state.update(weights_load)
+        model.load_state_dict(state)
+    return model
+
+def Get_EfficientNetB1(num_output, pretrainedPath):
+    model = EfficientNet("b1", num_output)
+    if pretrainedPath is not None:
+        the_url = pre_trained_weights_url["b1"]
+        b0_state_dict = model_zoo.load_url(the_url, model_dir=pretrainedPath)
+        weights_load = {}
+        state = model.state_dict()
+        state_keys = list(state.keys())
+        print(len(state), len(b0_state_dict))
+        for i, the_keys in enumerate(b0_state_dict.keys()):
+            print(the_keys,state_keys[i])
+            if state_keys[i].find('features') == -1:
+                continue #ignore the classifier part
+            weights_load[state_keys[i]] = b0_state_dict[the_keys]
+        state.update(weights_load)
+        model.load_state_dict(state)
+    return model
+
+def Get_EfficientNetB4(num_output, pretrainedPath):
+    model = EfficientNet("b3", num_output)
+    if pretrainedPath is not None:
+        the_url = pre_trained_weights_url["b3"]
+        b0_state_dict = model_zoo.load_url(the_url, model_dir=pretrainedPath)
+        weights_load = {}
+        state = model.state_dict()
+        print(len(state), len(b0_state_dict))
+
+        state_keys = list(state.keys())
+        for i, the_keys in enumerate(b0_state_dict.keys()):
+            print(the_keys,state_keys[i])
             if state_keys[i].find('features') == -1:
                 continue #ignore the classifier part
             weights_load[state_keys[i]] = b0_state_dict[the_keys]
@@ -237,4 +315,5 @@ def Get_EfficientNetB0(num_output, pretrainedPath):
     return model
 
 if __name__ == "__main__":
-    test()
+    # test()
+    Get_EfficientNetB1(2, "weights/")

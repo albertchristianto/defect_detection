@@ -5,14 +5,13 @@ from loguru import logger
 from datetime import datetime
 
 import json
-
+import math
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim import lr_scheduler
 from tensorboardX import SummaryWriter
 
-from model import get_model
+from model import ImgClassifier
 from dataloader import *
 
 LOG_LEVEL = 'TRACE'
@@ -23,19 +22,23 @@ PRETRAINED_PATH = './weights/'
 logger.remove()
 logger.add(sys.stdout, level=LOG_LEVEL)
 
+def one_cycle(y1=0.0, y2=1.0, steps=100):
+    # lambda function for sinusoidal ramp from y1 to y2
+    return lambda x: ((1 - math.cos(x * math.pi / steps)) / 2) * (y2 - y1) + y1
+
+
 def define_load_training_param():
     logger.trace("Define the training-testing parameter")
     parser = argparse.ArgumentParser(description='PyTorch Image Classification Training Code by Albert Christianto')
     parser.add_argument('--dataset_root', required=True, type=str, help='path to the dataset')
-    parser.add_argument('--model_type', type=str, default='ResNet34', help='define the model type that will be used')
+    parser.add_argument('--model_type', type=str, default='resnet34', help='define the model type that will be used')
     parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
-    parser.add_argument('--lr', default=1e-5, type=float, help='initial learning rate')
+    parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate')
     parser.add_argument('--batch_size', default=8, type=int, help='training batch size')
-    parser.add_argument('--val_freq', default=5, type=int, help='')
+    parser.add_argument('--val_freq', default=1, type=int, help='')
     parser.add_argument('--use_pretrained', action='store_true', default = False)
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, help='path to the checkpoint')
     parser.add_argument('--resume', action='store_true', default = False)
-    parser.add_argument('--input_size', default=224, type=int, help='number of epochs to save the model')
     parser.add_argument('--horizontal_flip_prob', default=0.5, type=float, help='initial learning rate')
     parser.add_argument('--rotation_value', default=180, type=int, help='number of epochs to save the model')
     parser.add_argument('--mode', type=str, required=True, help='define the model type that will be used')
@@ -45,14 +48,15 @@ def define_load_training_param():
     transform = {}
     transform['random_horizontal_flips'] = args.horizontal_flip_prob
     transform['random_rotation'] = [(-1 * args.rotation_value), args.rotation_value]
-    transform['input_size'] = args.input_size
 
     return args, transform
 
-def load_dataset_and_create_dataloader(args, transform):
+def load_dataset_create_dataloader_cnn_model(args, transform):
     logger.trace('Load classes name of the dataset')
     class_name_path = os.path.join(args.dataset_root, 'classes_name.txt')
     transform['class_name'] = get_class_name(class_name_path)
+    cnn_model = create_model(args, len(transform['class_name']))
+    transform['input_size'] = cnn_model.input_size
     logger.trace('Load means and standard deviation of the dataset')
     means_stds_path = os.path.join(args.dataset_root, 'mean_stds.txt')
     transform['means'], transform['stds'] = get_means_stds(means_stds_path)
@@ -60,14 +64,15 @@ def load_dataset_and_create_dataloader(args, transform):
     trainLoader, valLoader = getLoader(args.dataset_root, transform, args.batch_size)
     logger.info(f'Train dataset len: {len(trainLoader.dataset)}')
     logger.info(f'Validate dataset len: {len(valLoader.dataset)}')
-    return trainLoader, valLoader, transform['class_name'], transform['means'], transform['stds']
+    return trainLoader, valLoader, cnn_model, transform['class_name'], transform['means'], transform['stds']
 
-def create_model(args, len_class_name):
+def create_model(args, len_class_name, transform):
     pretrained_path = None
     if args.use_pretrained:
         pretrained_path = PRETRAINED_PATH
     logger.info(f'Building {args.model_type} network')
-    cnn_model = get_model(args.model_type, len_class_name, args.input_size, pretrained_path)
+    cnn_model = ImgClassifier(args.model_type, len_class_name, pretrained_path)
+    
     return cnn_model
 
 def resume_or_new_training(args, cnn_model):
@@ -90,13 +95,9 @@ def resume_or_new_training(args, cnn_model):
 
 def create_loss_function_optimizer_lr_scheduler(args, cnn_model):
     criterion = nn.CrossEntropyLoss()#build loss criterion
-    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr)
-    patience_param = args.epochs / (args.val_freq * 20)
-    if (patience_param <= 1):
-        patience_param = 5
-        args.val_freq = args.epochs / (patience_param * 20)
-        logger.info(f'Using default training strategy validation every {args.val_freq} epoch(s) and with patience param of {patience_param}')
-    lr_train_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer_cnn_model, mode='max', patience = patience_param)
+    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr, weight_decay=1e-4)
+    lf = one_cycle(1, 0.02, args.epochs)  # cosine 1->hyp['lrf']
+    lr_train_scheduler = optim.lr_scheduler.LambdaLR(optimizer_cnn_model, lr_lambda=lf)
     return criterion, optimizer_cnn_model, lr_train_scheduler
 
 def validate(use_gpu, cnn_model, valLoader):
@@ -131,7 +132,7 @@ def saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cn
 
 def post_training_process(args, best_acc_epoch_val, best_epoch, class_name, means, stds):
     the_text = f'dataset root: {args.dataset_root}\n'
-    the_text += f'model_type: {args.model_type}, input_size: {args.input_size}, lr: {args.lr},'
+    the_text += f'model_type: {args.model_type}, lr: {args.lr},'
     the_text += f' batch_size: {args.batch_size}, use_pretrained:{args.use_pretrained} \n'
     the_text += f'The best Accuracy is {best_acc_epoch_val} at epoch {best_epoch}'
     the_text_path = os.path.join(args.checkpoint_dir,'train_results.txt')
@@ -142,7 +143,6 @@ def post_training_process(args, best_acc_epoch_val, best_epoch, class_name, mean
 
     the_text_path = os.path.join(args.checkpoint_dir, f'{args.model_type}_ImgClassifier.json')
     dictionary = {}
-    dictionary['input_size'] = str(args.input_size)
     dictionary['means'] = []
     for each in means:
         dictionary['means'].append(str(each))
@@ -206,8 +206,8 @@ def test(args, cnn_model, valLoader):
 
 if __name__ == '__main__':
     args, transform = define_load_training_param()
-    trainLoader, valLoader, class_name, means, stds = load_dataset_and_create_dataloader(args, transform)
-    cnn_model = create_model(args, len(class_name))
+    trainLoader, valLoader, cnn_model, class_name, means, stds = load_dataset_create_dataloader_cnn_model(args, transform)
+
     if args.mode == 'train':
         train(args, class_name, means, stds, cnn_model, trainLoader, valLoader)
     elif args.mode == 'test':

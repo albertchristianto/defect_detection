@@ -31,16 +31,16 @@ def define_load_training_param():
     logger.trace("Define the training-testing parameter")
     parser = argparse.ArgumentParser(description='PyTorch Image Classification Training Code by Albert Christianto')
     parser.add_argument('--dataset_root', required=True, type=str, help='path to the dataset')
-    parser.add_argument('--model_type', type=str, default='resnet34', help='define the model type that will be used')
-    parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
+    parser.add_argument('--model_type', type=str, default='efficientnetb2', help='define the model type that will be used')
+    parser.add_argument('--epochs', default=10, type=int, help='number of total epochs to run')
     parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate')
-    parser.add_argument('--batch_size', default=8, type=int, help='training batch size')
+    parser.add_argument('--batch_size', default=32, type=int, help='training batch size')
     parser.add_argument('--val_freq', default=1, type=int, help='')
     parser.add_argument('--use_pretrained', action='store_true', default = False)
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, help='path to the checkpoint')
     parser.add_argument('--resume', action='store_true', default = False)
-    parser.add_argument('--horizontal_flip_prob', default=0.5, type=float, help='initial learning rate')
-    parser.add_argument('--rotation_value', default=180, type=int, help='number of epochs to save the model')
+    parser.add_argument('--horizontal_flip_prob', default=0.0, type=float, help='initial learning rate')
+    parser.add_argument('--rotation_value', default=0.0, type=int, help='number of epochs to save the model')
     parser.add_argument('--mode', type=str, required=True, help='define the model type that will be used')
     parser.add_argument('--weight_path', default=None, type=str, metavar='DIR', help='path to weight of the model')
     args = parser.parse_args()
@@ -66,7 +66,7 @@ def load_dataset_create_dataloader_cnn_model(args, transform):
     logger.info(f'Validate dataset len: {len(valLoader.dataset)}')
     return trainLoader, valLoader, cnn_model, transform['class_name'], transform['means'], transform['stds']
 
-def create_model(args, len_class_name, transform):
+def create_model(args, len_class_name):
     pretrained_path = None
     if args.use_pretrained:
         pretrained_path = PRETRAINED_PATH
@@ -108,7 +108,8 @@ def validate(use_gpu, cnn_model, valLoader):
         if use_gpu:
             img = img.cuda()
             label = label.cuda()
-        outputs = cnn_model(img)
+        with torch.no_grad():
+            outputs = cnn_model(img)
         _, preds = torch.max(outputs, 1)
         correct_array = preds == label.data
         correct += torch.sum(correct_array)

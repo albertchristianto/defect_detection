@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------
 import sys
-sys.path.append("../")
+sys.path.append("..")
 import torch
 from torch import Tensor
 import torch.nn as nn

@@ -10,21 +10,19 @@ def run():
     parser.add_argument('--use_gpu', action='store_true', default = True) 
     parser.add_argument('--input_path', default='E:/Albert_Christianto/Project/defect_detection/ImgClassifier/samples/lvNing_000005.bmp',
                             type=str, metavar='DIR', help='path to train list')
-    parser.add_argument('-b', '--batch_size', default=2, type=int,
-                                            metavar='N', help='batch size (default: 16)')
-    parser.add_argument('--weight_path', default='checkpoint/20221026-0454/img_classifier_best_epoch_160.pth', type=str, metavar='DIR',
+    parser.add_argument('--exp_folder_path', default='checkpoint/20221026-0454', type=str, metavar='DIR',
                                             help='path to weight of the model')   
     parser.add_argument('--model_type', type=str, default='ResNet50', help='define the model type that will be used: VGG16, ResNet34, ResNet50')
     parser.add_argument('--class_name_path', default='E:/Albert_Christianto/Project/defect_detection/dataset/private_pcb/classes_name.txt', type=str, metavar='DIR',
                                             help='path to weight of the model')
     parser.add_argument('--means_stds_path', default='E:/Albert_Christianto/Project/defect_detection/dataset/private_pcb/mean_stds.txt', type=str, metavar='DIR',
                                             help='path to weight of the model')
-    parser.add_argument('--input_size', default=224, type=int, metavar='N',
-                                            help='number of epochs to save the model')
     args = parser.parse_args()
+    class_name_path = os.path.join(args.exp_folder_path, 'classes_name.txt')
+    means_stds_path = os.path.join(args.exp_folder_path, 'mean_stds.txt')
 
-    class_name = get_class_name(args.class_name_path)
-    means, stds = get_means_stds(args.means_stds_path)
+    class_name = get_class_name(class_name_path)
+    means, stds = get_means_stds(means_stds_path)
     #BUILDING THE NETWORK
     print('Building {} network'.format(args.model_type))
     cnn_model = get_model(args.model_type, len(class_name), args.input_size, None)
@@ -36,7 +34,7 @@ def run():
 
     cnn_model.eval()
     img = cv2.imread(args.input_path)
-    img = cv2.resize(img, (args.input_size, args.input_size), interpolation=cv2.INTER_CUBIC)
+    img = cv2.resize(img, (cnn_model.input_size, cnn_model.input_size), interpolation=cv2.INTER_CUBIC)
     disp = img.copy()
     img = vgg_preprocess(img, means, stds)
     batch_images= np.expand_dims(img, 0)

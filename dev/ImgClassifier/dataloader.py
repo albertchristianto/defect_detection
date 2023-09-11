@@ -101,7 +101,7 @@ class ImageClassificationDataset(Dataset):
         self.data = data
         self.numSample = len(data)
         self.transformation = transform
-        # self.input_size = self.transformation['input_size']
+        self.input_size = self.transformation['input_size']
         self.define_means_stds()
         self.torch_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(self.transformation['random_horizontal_flips']),

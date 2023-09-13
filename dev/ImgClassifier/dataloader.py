@@ -7,6 +7,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import WeightedRandomSampler
 
 from torchvision import transforms
+import torchvision.transforms.functional as F
+
 from loguru import logger
 
 vgg_means = np.array([0.485, 0.456, 0.406], dtype=np.float32)
@@ -95,6 +97,15 @@ def write_means_stds(means_stds_path, means, stds):
         mean_stds_Txt.write('{},'.format(each_std))
     mean_stds_Txt.close()
 
+class SquarePad:
+    def __call__(self, image):
+        w, h = image.size
+        max_wh = np.max([w, h])
+        hp = int((max_wh - w) / 2)
+        vp = int((max_wh - h) / 2)
+        padding = (hp, vp, hp, vp)
+        return F.pad(image, padding, 0, 'constant')
+
 class ImageClassificationDataset(Dataset):
     def __init__(self, data, transform, train_mode=True):
         self.train_mode = train_mode
@@ -104,6 +115,7 @@ class ImageClassificationDataset(Dataset):
         self.input_size = self.transformation['input_size']
         self.define_means_stds()
         self.torch_transform = transforms.Compose([
+            SquarePad(),
             transforms.RandomHorizontalFlip(self.transformation['random_horizontal_flips']),
             transforms.RandomRotation(self.transformation['random_rotation']),
             transforms.Resize((self.input_size, self.input_size)),

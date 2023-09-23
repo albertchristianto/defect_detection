@@ -26,7 +26,6 @@ def one_cycle(y1=0.0, y2=1.0, steps=100):
     # lambda function for sinusoidal ramp from y1 to y2
     return lambda x: ((1 - math.cos(x * math.pi / steps)) / 2) * (y2 - y1) + y1
 
-
 def define_load_training_param():
     logger.trace("Define the training-testing parameter")
     parser = argparse.ArgumentParser(description='PyTorch Image Classification Training Code by Albert Christianto')
@@ -120,16 +119,16 @@ def validate(use_gpu, cnn_model, valLoader):
 
 def saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_val, args, cnn_model, valLoader, checkpoints_dir, train_checkpoints_path, writer):
     val_acc = validate(use_gpu, cnn_model, valLoader)
-    writer.add_scalar('Accuracy/val', val_acc, epoch)
+    writer.add_scalar('val_acc', val_acc, epoch)
     if (val_acc > best_acc_val):
         best_acc_val = val_acc
         best_epoch = epoch
-        model_save_filename = os.path.join(checkpoints_dir,'img_classifier_best_epoch.pth'.format(epoch))
+        model_save_filename = os.path.join(checkpoints_dir,f'img_classifier_{args.model_type}_best_epoch.pth')
         torch.save(cnn_model.state_dict(), model_save_filename)
     logger.info(f'Saving checkpoint to {train_checkpoints_path}')
     torch.save({'epoch':epoch, 'n_iter':n_iter, 'last_lr': args.lr, 'best_epoch': best_epoch, 'best_acc_val': best_acc_val,
                 'model_state_dict':cnn_model.state_dict()}, train_checkpoints_path)
-    return best_acc_val, best_epoch, val_acc
+    return best_acc_val, best_epoch
 
 def post_training_process(args, best_acc_epoch_val, best_epoch, class_name, means, stds):
     the_text = f'dataset root: {args.dataset_root}\n'
@@ -184,18 +183,18 @@ def train(args, class_name, means, stds, cnn_model, trainLoader, valLoader):
             loss.backward()#compute the gradient
             optimizer_cnn_model.step() #update the model
             running_corrects += torch.sum(preds == label.data)
-            writer.add_scalar('Loss', loss.item(), n_iter)
+            writer.add_scalar('train/loss', loss.item(), n_iter)
             if ((n_iter % SHOW_LOG_EVERY_N_ITERATIONS) == 0):
                 logger.info('[Epoch {}/{}] Iteration: {}. Loss: {}'.format(epoch, args.epochs, n_iter, loss.item()))
             n_iter += 1
         epoch_acc = running_corrects.double() / len(trainLoader.dataset)
-        writer.add_scalar('Accuracy/train', epoch_acc, epoch)
+        writer.add_scalar('train/acc', epoch_acc, epoch)
         if ((epoch + 1) % args.val_freq) != 0:
             continue
         args.lr = optimizer_cnn_model.param_groups[0]['lr']
-        best_acc_epoch_val, best_epoch, val_acc = saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_epoch_val, args, cnn_model, 
+        best_acc_epoch_val, best_epoch = saving_checkpoint(use_gpu, epoch, n_iter, best_epoch, best_acc_epoch_val, args, cnn_model, 
             valLoader, args.checkpoint_dir, train_checkpoints_path, writer)
-        lr_train_scheduler.step(val_acc)
+        lr_train_scheduler.step()
     post_training_process(args, best_acc_epoch_val, best_epoch, class_name, means, stds)
 
 def test(args, cnn_model, valLoader):

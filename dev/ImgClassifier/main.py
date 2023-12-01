@@ -87,6 +87,7 @@ def resume_or_new_training(args, cnn_model):
         logger.info(f'Resuming training from epoch {start_epoch}')
         return best_epoch, best_acc_epoch_val, start_epoch, start_iter, args, cnn_model
     current_time = datetime.now().strftime("%Y%m%d_%H%M")
+    current_time += f"_{args.model_type}"
     args.checkpoint_dir = os.path.join(args.checkpoint_dir, current_time)
     if not os.path.exists(args.checkpoint_dir):
         os.makedirs(args.checkpoint_dir)

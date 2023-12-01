@@ -21,3 +21,4 @@ if __name__ == '__main__':
     cnn_model = get_model('deeplabv3_mobilenet_v3', 2, False)
     output = cnn_model(fake_input)['out']
     print(output.size())
+    print(cnn_model.classifier)

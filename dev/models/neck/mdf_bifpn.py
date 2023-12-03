@@ -43,23 +43,23 @@ class BiFPNBlock(nn.Module):
     def __init__(self, feature_size=64, epsilon=0.0001):
         super(BiFPNBlock, self).__init__()
         self.epsilon = epsilon
-        
+
         self.p3_td = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p4_td = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p5_td = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p6_td = SeparableConvBlock(feature_size, feature_size, activation=True)
-        
+
         self.p4_out = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p5_out = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p6_out = SeparableConvBlock(feature_size, feature_size, activation=True)
         self.p7_out = SeparableConvBlock(feature_size, feature_size, activation=True)
-        
+
         # TODO: Init weights
         self.w1 = nn.Parameter(torch.Tensor(2, 4))
         self.w1_relu = nn.ReLU()
         self.w2 = nn.Parameter(torch.Tensor(3, 4))
         self.w2_relu = nn.ReLU()
-    
+
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x = inputs
         
@@ -84,9 +84,9 @@ class BiFPNBlock(nn.Module):
 
         return [p3_out, p4_out, p5_out, p6_out, p7_out]
 
-class BiFPN(nn.Module):
-    def __init__(self, size, feature_size=64, num_layers=5):
-        super(BiFPN, self).__init__()
+class MDF_BiFPN(nn.Module):
+    def __init__(self, size, feature_size=64, num_layers=5, out_feature_size=256):
+        super(MDF_BiFPN, self).__init__()
 
         self.p3 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
         self.p4 = nn.Conv2d(size[0], feature_size, kernel_size=1, stride=1, padding=0)
@@ -95,7 +95,7 @@ class BiFPN(nn.Module):
 
         # p7 is obtained via a 3x3 stride-2 conv on C5
         self.p7 = nn.Conv2d(size[2], feature_size, kernel_size=3, stride=2, padding=1)
-
+        self.reduction = nn.Conv2d(feature_size*5, out_feature_size, kernel_size=1, stride=1, padding=0)
         bifpns = []
         for _ in range(num_layers):
             bifpns.append(BiFPNBlock(feature_size))
@@ -118,7 +118,7 @@ class BiFPN(nn.Module):
         for i in range(1, len(features)):
             features[i] = nn.Upsample(scale_factor=self.scale_factor[i], mode='nearest')(features[i])
         features = torch.cat(features, axis=1)
-
+        features = self.reduction(features)
         return features
 
     def _initialize_weights_norm(self):
@@ -137,7 +137,7 @@ class BiFPN(nn.Module):
 if __name__ == '__main__':
     input_size = 60
     features_size = [80, 176, 1280]
-    model = BiFPN(features_size, feature_size=112)
+    model = MDF_BiFPN(features_size, feature_size=112)
     input_size = 64
     fake_input1 = torch.rand(1, features_size[0], input_size, input_size, requires_grad=True)
     fake_input2 = torch.rand(1, features_size[1], input_size//2, input_size//2, requires_grad=True)

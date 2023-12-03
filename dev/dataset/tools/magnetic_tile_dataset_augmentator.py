@@ -10,8 +10,8 @@ def create_folder(the_path):
 N_TIMES_TO_CROP = 10
 
 parser = argparse.ArgumentParser(description='Process dataset to our format')
-parser.add_argument('--dataset_path', default='E:\Dataset\Magnetic-tile-defect-datasets', type=str, metavar='DIR', help='path to magnetic tile dataset')
-parser.add_argument('--out_dataset_path', default='E:\Albert Christianto\Project\defect_detection\dataset', type=str, metavar='DIR', help='path to magnetic tile dataset')
+parser.add_argument('--dataset_path', default='C:\MyData\defect_detection\dev\dataset\Magnetic-tile-defect-datasets-master', type=str, metavar='DIR', help='path to magnetic tile dataset')
+parser.add_argument('--out_dataset_path', default='C:\MyData\defect_detection\dev\dataset', type=str, metavar='DIR', help='path to magnetic tile dataset')
 args = parser.parse_args()
 
 magnetic_tile_path = os.path.join(args.out_dataset_path, 'magnetic_tile')

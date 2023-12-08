@@ -20,9 +20,9 @@ ning_param = {
     'efficientnetv2_l': [512, 7, 256]
 }
 
-class ImgSegmentationSelfAttention(nn.Module):
-    def __init__(self, backbone, neck_channels, neck_repeat_block, head_channels, pretrained_path='weights/'):
-        super(ImgSegmentationSelfAttention, self).__init__()
+class SSA_Classifier(nn.Module):
+    def __init__(self, backbone, neck_channels, neck_repeat_block, head_channels, s_attention=False, pretrained_path='weights/'):
+        super(SSA_Classifier, self).__init__()
         self.backbone, self.input_size = self.create_backbone(backbone, pretrained_path)
         self.neck = MDF_BiFPN(self.backbone.out_features_size, feature_size=neck_channels, num_layers=neck_repeat_block, out_feature_size=neck_channels)
         self.classes_head = nn.Sequential(
@@ -30,6 +30,17 @@ class ImgSegmentationSelfAttention(nn.Module):
                               nn.ReLU(inplace=True),
                               nn.Conv2d(head_channels, 2, kernel_size=1, stride=1, padding=0, bias=True)
                             )
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Sequential(
+            nn.Linear(neck_channels, head_channels),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            nn.Linear(head_channels, head_channels),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            nn.Linear(head_channels, 2)
+        )
+        self.s_attention = s_attention
         self._initialize_weights_norm()
 
     def create_backbone(self, backbone, pretrained_path):
@@ -61,13 +72,19 @@ class ImgSegmentationSelfAttention(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         out = self.backbone(x)
         out = self.neck(out)
-        out_classes = self.classes_head(out)
+        out_seg = self.classes_head(out)
+        if self.s_attention:
+            # print(out_seg.size())
+            out = torch.concat([out, out_seg])
+        out_classes = self.avgpool(out)
+        out_classes = torch.flatten(out_classes, 1)
+        out_classes = self.fc(out_classes)
 
-        return out_classes
+        return out_classes, out_seg
 
 if __name__ =="__main__":
     model_type = 'efficientnetv2_s'
-    model = ImgSegmentationSelfAttention(model_type, ning_param[model_type][0], ning_param[model_type][1], ning_param[model_type][2])
+    model = SSA_Classifier(model_type, ning_param[model_type][0], ning_param[model_type][1], ning_param[model_type][2])
     fake_input = torch.rand(1, 3, model.input_size, model.input_size, requires_grad=True)
-    fake_output = model(fake_input)
+    fake_output, fake_output_seg = model(fake_input)
     print(fake_output.size())

@@ -17,7 +17,8 @@ from models.neck.mdf_bifpn import MDF_BiFPN
 ning_param = {
     'efficientnetv2_s': [386, 5, 256],
     'efficientnetv2_m': [386, 7, 256],
-    'efficientnetv2_l': [512, 7, 256]
+    'efficientnetv2_l': [512, 7, 256],
+    'resnet50':[]
 }
 
 class SSA_Classifier(nn.Module):

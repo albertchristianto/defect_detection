@@ -29,7 +29,7 @@ __YOUR_DATASET__
     ├── compute_mean_stds.py
     └── CreateSplitTxt.py
 ```
-2. For the tools folder, you can copy it from [here](https://github.com/albertchristianto/defect_detection/tree/main/dataset/road_crack/tools).
+2. For the tools folder, you can copy it from [here](https://github.com/albertchristianto/defect_detection/tree/main/dev/dataset/tools).
 3. Execute these two python files with this command
 ```
 cd __YOUR_DATASET__/tools

@@ -162,24 +162,31 @@ def train(args, class_name, means, stds, cnn_model, trainLoader, valLoader):
     cnn_model.train()
     for epoch in range(start_epoch, args.epochs):
         running_corrects = 0
-        for i, (img, label) in enumerate(trainLoader):
+        running_corrects_class = 0
+        for i, (img, label, seglabel) in enumerate(trainLoader):
             #load all the data in GPU
             if use_gpu:
                 img = img.cuda()
                 label = label.cuda()
-            outputs = cnn_model(img)['out']#inference the input
-            loss = criterion(outputs, label)#compute the loss
+                seglabel = seglabel.cuda()
+            class_pred, seg_pred = cnn_model(img)#inference the input
+            _, class_pred = torch.max(class_pred, 1)#get the training prediction
+            loss = criterion(seg_pred[1], seglabel) + criterion(class_pred, label)#compute the loss#compute the loss
             optimizer_cnn_model.zero_grad() #set gradient to zero
             loss.backward()#compute the gradient
             optimizer_cnn_model.step() #update the model
-            preds = torch.argmax(outputs, 1)
-            running_corrects += compute_accuracy(label, preds)
+            seg_pred = torch.argmax(seg_pred, 1)
+            running_corrects += compute_accuracy(seglabel, seg_pred)
+            running_corrects_class += torch.sum(class_pred == label.data)
+
             writer.add_scalar('Loss', loss.item(), n_iter)
             if ((n_iter % SHOW_LOG_EVERY_N_ITERATIONS) == 0):
                 logger.info('[Epoch {}/{}] Iteration: {}. Loss: {}'.format(epoch, args.epochs, n_iter, loss.item()))
             n_iter += 1
+        epoch_class_acc = running_corrects_class.double() / len(trainLoader.dataset)
         epoch_acc = running_corrects / len(trainLoader.dataset)
-        writer.add_scalar('Accuracy/train', epoch_acc, epoch)
+        writer.add_scalar('Accuracy/train_class', epoch_class_acc, epoch)
+        writer.add_scalar('Accuracy/train_seg', epoch_acc, epoch)
         if ((epoch + 1) % args.val_freq) != 0:
             continue
         args.lr = optimizer_cnn_model.param_groups[0]['lr']

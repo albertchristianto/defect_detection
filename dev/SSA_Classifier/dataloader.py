@@ -114,6 +114,7 @@ class ImageClassificationDataset(Dataset):
 
     def __getitem__(self, index):
         imgPath = self.data[index][0]
+        label = int(self.data[index][1])
         labelPath = imgPath.split('.')[0] + '.png'
         try:
             segLabel = cv2.imread(labelPath)
@@ -128,7 +129,7 @@ class ImageClassificationDataset(Dataset):
         except Exception as e:
             logger.error(f'{imgPath}: {e}')
 
-        return img, segLabel
+        return img, label, segLabel
 
     def __len__(self):
         return self.numSample

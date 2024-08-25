@@ -30,18 +30,19 @@ def define_load_training_param():
     logger.trace("Define the training-testing parameter")
     parser = argparse.ArgumentParser(description='PyTorch Image Classification Training Code by Albert Christianto')
     parser.add_argument('--dataset_root', required=True, type=str, help='path to the dataset')
-    parser.add_argument('--model_type', type=str, default='efficientnetb2', help='define the model type that will be used')
-    parser.add_argument('--epochs', default=10, type=int, help='number of total epochs to run')
+    parser.add_argument('--model_type', type=str, default='resnet101', help='define the model type that will be used')
+    parser.add_argument('--epochs', default=250, type=int, help='number of total epochs to run')
     parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate')
-    parser.add_argument('--batch_size', default=32, type=int, help='training batch size')
-    parser.add_argument('--val_freq', default=1, type=int, help='')
+    parser.add_argument('--batch_size', default=64, type=int, help='training batch size')
+    parser.add_argument('--val_freq', default=2, type=int, help='')
     parser.add_argument('--use_pretrained', action='store_true', default = False)
     parser.add_argument('--checkpoint_dir', default='checkpoint', type=str, help='path to the checkpoint')
     parser.add_argument('--resume', action='store_true', default = False)
     parser.add_argument('--horizontal_flip_prob', default=0.0, type=float, help='initial learning rate')
-    parser.add_argument('--rotation_value', default=0.0, type=int, help='number of epochs to save the model')
+    parser.add_argument('--rotation_value', default=15.0, type=int, help='number of epochs to save the model')
     parser.add_argument('--mode', type=str, required=True, help='define the model type that will be used')
     parser.add_argument('--weight_path', default=None, type=str, metavar='DIR', help='path to weight of the model')
+    parser.add_argument('--optimizer', default='Adam', type=str, help='path to the checkpoint')
     args = parser.parse_args()
     logger.trace("Define the augmentation parameter")
     transform = {}
@@ -95,9 +96,15 @@ def resume_or_new_training(args, cnn_model):
 
 def create_loss_function_optimizer_lr_scheduler(args, cnn_model):
     criterion = nn.CrossEntropyLoss()#build loss criterion
-    optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr, weight_decay=1e-4)
+    if args.optimizer=="Adam":
+        optimizer_cnn_model = optim.Adam(cnn_model.parameters(), args.lr, weight_decay=1e-4)
+    elif args.optimizer=="SGD":
+        optimizer_cnn_model = optim.SGD(cnn_model.parameters(), lr=args.lr, momentum=0.9)
+    else:
+        optimizer_cnn_model = optim.AdamW(cnn_model.parameters(), args.lr, weight_decay=1e-4)
     lf = one_cycle(1, 0.02, args.epochs)  # cosine 1->hyp['lrf']
-    lr_train_scheduler = optim.lr_scheduler.LambdaLR(optimizer_cnn_model, lr_lambda=lf)
+    # lr_train_scheduler = optim.lr_scheduler.LambdaLR(optimizer_cnn_model, lr_lambda=lf)
+    lr_train_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer_cnn_model, T_max=10)
     return criterion, optimizer_cnn_model, lr_train_scheduler
 
 def validate(use_gpu, cnn_model, valLoader):

@@ -1,4 +1,5 @@
 .pi/
+.superpowers/
 references/
 dev/dataset/magnetic_tile/
 dev/dataset/private_pcb_img_classification/

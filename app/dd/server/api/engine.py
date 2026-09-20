@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 # Add app directory to path for imports
-repo_root = Path(__file__).parent.parent.parent
+# __file__ is at app/dd/server/api/engine.py
+repo_root = Path(__file__).parent.parent.parent.parent  # Go up to repo root
 sys.path.insert(0, str(repo_root / 'app'))
 
 from dd.backend.py.ImgClassifier import ImgClassifier

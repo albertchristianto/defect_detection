@@ -7,14 +7,14 @@ React + FastAPI web interface for defect detection.
 ### Backend
 
 ```bash
-cd server
+cd app/dd/server
 pip install -r requirements.txt
 ```
 
 ### Frontend
 
 ```bash
-cd server/frontend
+cd app/dd/server/frontend
 npm install
 ```
 
@@ -22,13 +22,13 @@ npm install
 
 Terminal 1 (Backend):
 ```bash
-cd server
+cd app/dd/server
 uvicorn api.main:app --reload
 ```
 
 Terminal 2 (Frontend):
 ```bash
-cd server/frontend
+cd app/dd/server/frontend
 npm run dev
 ```
 
@@ -38,13 +38,13 @@ Open http://localhost:5173
 
 Build frontend:
 ```bash
-cd server/frontend
+cd app/dd/server/frontend
 npm run build
 ```
 
 Run server:
 ```bash
-cd server
+cd app/dd/server
 uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 

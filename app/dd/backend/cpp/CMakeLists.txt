@@ -9,26 +9,42 @@ endif()
 
 project(DefectDetectionCpp)
 
-#boost library
+# === Platform-conditional defaults ===
+if(WIN32)
+    set(DEFAULT_BOOST_DIR "E:/Albert_Christianto/third_party/boost_1_76_0")
+    set(DEFAULT_NIGHT_FURY_DIR "E:/Albert_Christianto/Project/night_fury/build/install")
+    set(DEFAULT_TENSORRT_DIR "E:/Albert_Christianto/third_party/TensorRT-8.5.3.1")
+    set(DEFAULT_OPENCV_DIR "E:/Albert_Christianto/third_party/opencv-python/_skbuild/win-amd64-3.9/cmake-install")
+else()
+    # On Linux, rely on system packages or user-provided -D flags
+    set(DEFAULT_BOOST_DIR "")
+    set(DEFAULT_NIGHT_FURY_DIR "")
+    set(DEFAULT_TENSORRT_DIR "")
+    set(DEFAULT_OPENCV_DIR "")
+endif()
+
+# Boost library
 set(Boost_USE_STATIC_LIBS ON)
-if(NOT BOOST_DIR)
-    set(BOOST_DIR E:/Albert_Christianto/third_party/boost_1_76_0) # either set it here or from the command line  
+if(NOT BOOST_DIR AND DEFAULT_BOOST_DIR)
+    set(BOOST_DIR ${DEFAULT_BOOST_DIR})
 endif()
-if(NOT Boost_INCLUDE_DIR)
-    set(Boost_INCLUDE_DIR ${BOOST_DIR}) # either set it here or from the command line  
-endif()
-if(NOT Boost_LIBRARY_DIR)
-    set(Boost_LIBRARY_DIR ${BOOST_DIR}/stage/lib) # either set it here or from the command line  
+if(BOOST_DIR)
+    if(NOT Boost_INCLUDE_DIR)
+        set(Boost_INCLUDE_DIR ${BOOST_DIR})
+    endif()
+    if(NOT Boost_LIBRARY_DIR)
+        set(Boost_LIBRARY_DIR ${BOOST_DIR}/stage/lib)
+    endif()
 endif()
 find_package(Boost 1.76.0 REQUIRED filesystem)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
-#argparse library
+# Argparse library
 set(ARGPARSE_INCLUDE_DIR third_party/argparse/include)
 include_directories(${ARGPARSE_INCLUDE_DIR})
 
-#json library
+# JSON library
 set(JSON_Install OFF CACHE INTERNAL "")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(NLOHMANN_JSON_DIR third_party/json)
@@ -36,40 +52,46 @@ set(NLOHMANN_JSON_INCLUDE_DIR third_party/json/include)
 add_subdirectory(${NLOHMANN_JSON_DIR})
 include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
 
-#night_fury library
-if(NOT night_fury_DIR)
-    set(night_fury_DIR E:/Albert_Christianto/Project/night_fury/build/install) # either set it here or from the command line  
+# night_fury library
+if(NOT night_fury_DIR AND DEFAULT_NIGHT_FURY_DIR)
+    set(night_fury_DIR ${DEFAULT_NIGHT_FURY_DIR})
 endif()
 find_package(night_fury 0.0.1 REQUIRED)
 
-# setup CUDA and TensorRT
+# CUDA and TensorRT
 find_package(CUDA REQUIRED)
-# message(STATUS "    libraries: ${CUDA_LIBRARIES}")
-# message(STATUS "    include path: ${CUDA_INCLUDE_DIRS}")
-# enable_language(CUDA)  # add this line, then no need to setup cuda path in vs
-if(NOT TensorRT_DIR)
-    set(TensorRT_DIR E:/Albert_Christianto/third_party/TensorRT-8.5.3.1) # either set it here or from the command line  
+if(NOT TensorRT_DIR AND DEFAULT_TENSORRT_DIR)
+    set(TensorRT_DIR ${DEFAULT_TENSORRT_DIR})
 endif()
-if(NOT TensorRT_INCLUDE_DIRS)
-    set(TensorRT_INCLUDE_DIRS ${TensorRT_DIR}/include) # either set it here or from the command line  
+if(TensorRT_DIR)
+    if(NOT TensorRT_INCLUDE_DIRS)
+        set(TensorRT_INCLUDE_DIRS ${TensorRT_DIR}/include)
+    endif()
+    if(NOT TensorRT_LIBRARY_DIRS)
+        set(TensorRT_LIBRARY_DIRS ${TensorRT_DIR}/lib)
+    endif()
+    link_directories(${TensorRT_LIBRARY_DIRS})
 endif()
-if(NOT TensorRT_LIBRARY_DIRS)
-    set(TensorRT_LIBRARY_DIRS ${TensorRT_DIR}/lib) # either set it here or from the command line  
-endif()
-link_directories(${TensorRT_LIBRARY_DIRS})# Add the TensorRT library directories
 set(TensorRT_LIBRARIES "nvinfer" "nvinfer_plugin" "nvonnxparser" "nvparsers")
 
-#setup opencv
-if(NOT OpenCV_DIR)
-    set(OpenCV_DIR E:/Albert_Christianto/third_party/opencv-python/_skbuild/win-amd64-3.9/cmake-install) # either set it here or from the command line  
+# OpenCV
+if(NOT OpenCV_DIR AND DEFAULT_OPENCV_DIR)
+    set(OpenCV_DIR ${DEFAULT_OPENCV_DIR})
 endif()
-find_package(OpenCV)
+find_package(OpenCV REQUIRED)
 
+# Install dir
 set(DD_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(DD_LIBRARIES_DEPENDENCIES nlohmann_json::nlohmann_json Boost::filesystem ${NIGHT_FURY_LIBRARIES} ${CUDA_LIBRARIES} ${TensorRT_LIBRARIES} ${OpenCV_LIBS})
 
 add_compile_definitions(DD_BACKEND_EXPORTS)
 add_compile_definitions(DD_INFERENCE_EXPORTS)
+
+# On Linux, hide symbols by default so DD_BACKEND_API/DD_INFERENCE_API
+# visibility("default") actually controls what's exported
+if(UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+endif()
 
 add_library(DdBackendModule SHARED src/Datum.cpp src/ImgClassifier.cpp src/TrtUtils.cpp)
 target_include_directories(DdBackendModule PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})

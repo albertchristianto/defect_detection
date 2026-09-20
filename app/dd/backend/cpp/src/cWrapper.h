@@ -3,32 +3,35 @@
 #define C_WRAPPER_H
 
 #ifdef _WIN32
-    #ifdef DD_INFERENCE_EXPORTS
-        #define DD_INFERENCE_API __declspec(dllexport)
-    #else
-        #define DD_INFERENCE_API __declspec(dllimport)
-    #endif
-#elif __linux__ 
-    #define DD_INFERENCE_API
+#ifdef DD_INFERENCE_EXPORTS
+#define DD_INFERENCE_API __declspec(dllexport)
+#else
+#define DD_INFERENCE_API __declspec(dllimport)
+#endif
+#elif __linux__
+#define DD_INFERENCE_API
 #endif
 
 #define C_MAX_OBJECTS 100
 
-namespace dd {
+namespace dd
+{
     /**
       A struct for a C-style Image
     */
-    struct C_Image {
+    struct C_Image
+    {
         unsigned long long TimeStamp;
-        unsigned char* Ptr; /**< unsigned char pointer to the image */
-        int Height; /**< image height */
-        int Width; /**< image width */
-        int Depth; /**< image depth or channel */
+        unsigned char *Ptr; /**< unsigned char pointer to the image */
+        int Height;         /**< image height */
+        int Width;          /**< image width */
+        int Depth;          /**< image depth or channel */
     };
     /**
       A struct for all the inference results
     */
-    struct C_Results {
+    struct C_Results
+    {
         unsigned long long TimeStamp;
         char ClassName[10]; /**< the class name of the inference result */
     };
@@ -57,7 +60,7 @@ namespace dd {
     ouput shows error, please check c# project for the meaning
     @param[in]  send_results  Callback function for the hits; the callback function must return 0;
     */
-    extern "C" DD_INFERENCE_API int AddApiFuncPtr(int (*send_results)(C_Results&));
+    extern "C" DD_INFERENCE_API int AddApiFuncPtr(int (*send_results)(C_Results &));
     /*!
     Delete a pipeline
     ouput shows error, please check c# project for the meaning
@@ -70,11 +73,11 @@ namespace dd {
     @param[in]  api_id  which pipeline the function is applied on
     @param[in]  image   input image
     */
-    extern "C" DD_INFERENCE_API int SendImage(int api_id, C_Image& image);
-//Logging API
-    extern "C" DD_INFERENCE_API void Info(const char* str);
-    extern "C" DD_INFERENCE_API void Error(const char* str);
-    extern "C" DD_INFERENCE_API void Trace(const char* str);
+    extern "C" DD_INFERENCE_API int SendImage(int api_id, C_Image &image);
+    // Logging API
+    extern "C" DD_INFERENCE_API void Info(const char *str);
+    extern "C" DD_INFERENCE_API void Error(const char *str);
+    extern "C" DD_INFERENCE_API void Trace(const char *str);
 
 }
 

@@ -3,18 +3,61 @@ Defect Detection Inference API supports:
 1. C / C++ 
 2. Python
 
-## Getting Started
-Follow these commands to build the library.
+## Build Commands
+
+### Windows
+
+```cmd
+cmake -B build ^
+  -DBOOST_DIR={THE_LIBRARY_PATH}/boost_1_76_0 ^
+  -Dnight_fury_DIR={THE_LIBRARY_PATH}/night_fury/build/install ^
+  -DTensorRT_DIR={THE_LIBRARY_PATH}/TensorRT-8.5.3.1 ^
+  -DOpenCV_DIR={THE_LIBRARY_PATH}/opencv-python/_skbuild/win-amd64-3.9/cmake-install
+
+cmake --build build --config Release
+cmake --install build --config Release
 ```
-mkdir build
-cd build/
-cmake ..
-# in Windows
-cmake --build . --target install --config Release
-# in Linux
-make all
-make install
+
+### Linux
+
+**Option 1: Use system Boost and OpenCV**
+
+```bash
+# Install system packages
+sudo apt install libboost-filesystem-dev libopencv-dev
+
+# Configure (only provide paths not in system)
+cmake -B build \
+  -Dnight_fury_DIR=/path/to/night_fury/install \
+  -DTensorRT_DIR=/opt/TensorRT-8.5.3.1
+
+# Build and install
+cmake --build build -j$(nproc)
+cmake --install build
 ```
+
+**Option 2: All custom paths**
+
+```bash
+cmake -B build \
+  -DBOOST_DIR=/path/to/boost_1_76_0 \
+  -Dnight_fury_DIR=/path/to/night_fury/install \
+  -DTensorRT_DIR=/path/to/TensorRT-8.5.3.1 \
+  -DOpenCV_DIR=/path/to/opencv/build
+
+cmake --build build -j$(nproc)
+cmake --install build
+```
+
+### Build Output
+
+Libraries and executables are installed to `lib/`:
+
+- `DdBackendModule.dll` / `libDdBackendModule.so` - Core inference module
+- `DdInference.dll` / `libDdInference.so` - Python-callable wrapper
+- `ImageClassifierTest` - Standalone classifier test
+- `OnnxTrtEngineGenerator` - ONNX to TensorRT converter
+- `DefectDetectionTest` - API integration test
 
 ## How Does It Work?
 This backend application is using [night_fury](https://github.com/albertchristianto/night_fury). In order to use the library, there are 4 classes that must inherit classes from the framework. Here is the list of the classes that must be inherit from night_fury library:

@@ -9,10 +9,10 @@ Defect Detection Inference API supports:
 
 ```cmd
 cmake -B build ^
-  -DBOOST_DIR=E:/Albert_Christianto/third_party/boost_1_76_0 ^
-  -Dnight_fury_DIR=E:/Albert_Christianto/Project/night_fury/build/install ^
-  -DTensorRT_DIR=E:/Albert_Christianto/third_party/TensorRT-8.5.3.1 ^
-  -DOpenCV_DIR=E:/Albert_Christianto/third_party/opencv-python/_skbuild/win-amd64-3.9/cmake-install
+  -DBOOST_DIR={THE_LIBRARY_PATH}/boost_1_76_0 ^
+  -Dnight_fury_DIR={THE_LIBRARY_PATH}/night_fury/build/install ^
+  -DTensorRT_DIR={THE_LIBRARY_PATH}/TensorRT-8.5.3.1 ^
+  -DOpenCV_DIR={THE_LIBRARY_PATH}/opencv-python/_skbuild/win-amd64-3.9/cmake-install
 
 cmake --build build --config Release
 cmake --install build --config Release

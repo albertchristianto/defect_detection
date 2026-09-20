@@ -11,10 +11,10 @@ project(DefectDetectionCpp)
 
 # === Platform-conditional defaults ===
 if(WIN32)
-    set(DEFAULT_BOOST_DIR "E:/Albert_Christianto/third_party/boost_1_76_0")
-    set(DEFAULT_NIGHT_FURY_DIR "E:/Albert_Christianto/Project/night_fury/build/install")
-    set(DEFAULT_TENSORRT_DIR "E:/Albert_Christianto/third_party/TensorRT-8.5.3.1")
-    set(DEFAULT_OPENCV_DIR "E:/Albert_Christianto/third_party/opencv-python/_skbuild/win-amd64-3.9/cmake-install")
+    set(DEFAULT_BOOST_DIR "")
+    set(DEFAULT_NIGHT_FURY_DIR "")
+    set(DEFAULT_TENSORRT_DIR "")
+    set(DEFAULT_OPENCV_DIR "")
 else()
     # On Linux, rely on system packages or user-provided -D flags
     set(DEFAULT_BOOST_DIR "")
@@ -86,12 +86,6 @@ set(DD_LIBRARIES_DEPENDENCIES nlohmann_json::nlohmann_json Boost::filesystem ${N
 
 add_compile_definitions(DD_BACKEND_EXPORTS)
 add_compile_definitions(DD_INFERENCE_EXPORTS)
-
-# On Linux, hide symbols by default so DD_BACKEND_API/DD_INFERENCE_API
-# visibility("default") actually controls what's exported
-if(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-endif()
 
 add_library(DdBackendModule SHARED src/Datum.cpp src/ImgClassifier.cpp src/TrtUtils.cpp)
 target_include_directories(DdBackendModule PUBLIC ${NIGHT_FURY_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
